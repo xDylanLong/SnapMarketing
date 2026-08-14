@@ -11,6 +11,7 @@
     "url": "git+https://github.com/xDylanLong/SnapMarketing.git"
   },
   "scripts": {
+    "dev": "node scripts/dev.mjs",
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "build": "pnpm -r build",
