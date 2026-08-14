@@ -16,8 +16,8 @@ declare module '@deepseek-ai/dsh-typert-protocol' {
     ? {
       readonly catalog: () => Promise<RemoteResult<import('@snapmarketing/plugin-manifest').PluginManifest>>
       readonly installed: () => Promise<RemoteResult<readonly import('./types.ts').InstalledPlugin[]>>
-      readonly install: (pluginId: string) => Promise<RemoteResult<import('./types.ts').PluginOperationResult>>
-      readonly uninstall: (pluginId: string) => Promise<RemoteResult<import('./types.ts').PluginOperationResult>>
+      readonly installPlugin: (pluginId: string) => Promise<RemoteResult<import('./types.ts').PluginOperationResult>>
+      readonly uninstallPlugin: (pluginId: string) => Promise<RemoteResult<import('./types.ts').PluginOperationResult>>
     }
     : Record<string, never>
   export class TypertRemoteService {
@@ -43,6 +43,7 @@ declare module '@deepseek-ai/dsh-client-runtime/client' {
   export interface ClientContext {
     readonly slots: import('@deepseek-ai/dsh-client-ui-slots').SlotContext
     readonly remote: {
+      $mount(contribution: unknown): Promise<() => Promise<void>>
       readonly pluginCenter: import('@deepseek-ai/dsh-typert-protocol').TypertRemoteNamespace<'pluginCenter'>
     }
   }
