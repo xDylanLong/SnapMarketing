@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "1.0",
+  "updatedAt": "2026-08-14T00:00:00Z",
+  "plugins": [
+    {
+      "id": "cordis-tools",
+      "name": "Cordis Tools",
+      "description": "为 DeepSeek Harness 提供 Cordis 动态插件的定义、运行和管理界面。",
+      "longDescription": "通过 Harness 原有的动态插件能力运行经过确认的 Cordis 插件，并在对话中展示运行状态。",
+      "author": {
+        "name": "DeepSeek Harness Community",
+        "url": "https://github.com/deepseek-ai"
+      },
+      "repository": "https://github.com/deepseek-ai/deepseek-harness/tree/main/packages/extensions/ui-cordis",
+      "version": "0.1.0-rc.5",
+      "install": {
+        "type": "package",
+        "source": "@deepseek-ai/dsh-client-ui-cordis"
+      },
+      "hasUI": true,
+      "category": "ui",
+      "tags": ["cordis", "agent", "productivity"],
+      "usage": {
+        "summary": "安装后在 Harness 的 Cordis 工具界面中定义和运行动态插件。",
+        "examples": ["列出当前 Cordis 插件", "运行这个 Cordis 工具"]
+      },
+      "placement": {
+        "enabled": true,
+        "slots": ["conversation.view", "conversation.input.dock"],
+        "defaultSlot": "conversation.view"
+      }
+    },
+    {
+      "id": "deepseek-web-search",
+      "name": "DeepSeek Web Search",
+      "description": "为 Agent 增加 DeepSeek 联网搜索能力。",
+      "longDescription": "这是一个能力插件，不提供独立界面；安装后能力由 Harness Agent 使用。",
+      "author": {
+        "name": "DeepSeek Harness Community",
+        "url": "https://github.com/deepseek-ai"
+      },
+      "repository": "https://github.com/deepseek-ai/deepseek-harness/tree/main/packages/web/web-search-deepseek",
+      "version": "0.1.0-rc.5",
+      "install": {
+        "type": "package",
+        "source": "@deepseek-ai/dsh-web-search-deepseek"
+      },
+      "hasUI": false,
+      "category": "capability",
+      "tags": ["web", "agent", "search"],
+      "usage": {
+        "summary": "安装后直接让 Agent 使用联网搜索能力。"
+      }
+    }
+  ]
+}

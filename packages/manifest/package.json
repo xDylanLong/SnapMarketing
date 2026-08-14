@@ -1,0 +1,25 @@
+{
+  "name": "@snapmarketing/plugin-manifest",
+  "version": "0.1.0",
+  "description": "Manifest V1 schema and catalog policy for SnapMarketing",
+  "type": "module",
+  "license": "Apache-2.0",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "default": "./lib/index.js"
+    }
+  },
+  "files": ["lib"],
+  "scripts": {
+    "build": "tsdown && tsc -p tsconfig.dts.json"
+  },
+  "dependencies": {
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "tsdown": "^0.12.9"
+  }
+}

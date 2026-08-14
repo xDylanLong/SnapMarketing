@@ -1,0 +1,9 @@
+# SnapMarketing is a thin layer over the profile's existing Harness runtime.
+# The user can override catalogUrl/profile in their own patch or through the
+# SNAPMARKETING_* environment variables supported by their launch wrapper.
+- insert:
+    - id: snapmarketing-plugin-center
+      name: '@snapmarketing/dsh-plugin-center'
+      config:
+        catalogUrl: 'https://raw.githubusercontent.com/xDylanLong/SnapMarketing/main/packages/plugin-center/registry/plugins.json'
+        profile: 'web'
