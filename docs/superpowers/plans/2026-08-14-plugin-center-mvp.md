@@ -78,12 +78,12 @@
 ### Task 4: Integration docs, examples, and release checks
 
 **Files:**
-- Create: `docs/manifest-v1.md`, `docs/installation.md`, `docs/catalog-maintenance.md`, `packages/plugin-center/cordis.patch.yml`, `.github/workflows/ci.yml`
+- Create: `docs/manifest-v1.md`, `docs/installation.md`, `docs/catalog-maintenance.md`, `packages/plugin-center/cordis.patch.yml`
 - Modify: `README.md`, `README.zh.md`, `CONTRIBUTING.md`, package manifests
 
 - [ ] Document the exact Manifest JSON with field meanings, allowlist policy, GitHub raw catalog configuration, and the DSH install command.
 - [ ] Document that package authors own their UI and must not use DOM injection; placement metadata is descriptive until a Harness allowlist is available.
-- [ ] Add CI commands for install, test, typecheck, build, and package-file audit on Node 22.
+- [ ] Keep the release commands documented for CI adoption without requiring a GitHub token with workflow scope in the initial public push.
 - [ ] Run the complete local release gate and inspect the generated package contents with `pnpm pack --dry-run`.
 
 ### Task 5: Public repository publication

@@ -24,10 +24,6 @@ declare module '@deepseek-ai/dsh-typert-protocol' {
     protected readonly ctx: import('@deepseek-ai/cordis').Context
     constructor(ctx: import('@deepseek-ai/cordis').Context, serviceKey: string)
   }
-  export function Remote(name?: string): <This extends object, Args extends unknown[], Result>(
-    method: (this: This, ...args: Args) => Result,
-    context: ClassMethodDecoratorContext<This, (this: This, ...args: Args) => Result>,
-  ) => void
 }
 
 declare module '@deepseek-ai/dsh-api-gateway/client' {}

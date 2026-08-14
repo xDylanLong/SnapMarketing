@@ -1,6 +1,6 @@
 import { Context } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/cordis-plugin-loader'
-import { Remote, TypertRemoteService } from '@deepseek-ai/dsh-typert-protocol'
+import { TypertRemoteService } from '@deepseek-ai/dsh-typert-protocol'
 import { assertInstallable } from '@snapmarketing/plugin-manifest'
 import { fetchCatalog } from './catalog.ts'
 import { createDshCliInstaller } from './installer.ts'
@@ -30,27 +30,23 @@ export class PluginCenterGateway extends TypertRemoteService {
     })
   }
 
-  /** Return the validated static catalog. */
-  @Remote('catalog')
+  /** Return the validated static catalog. The strict export is declared in `./typert`. */
   async catalog(): Promise<PluginManifest> {
     return fetchCatalog(this.config)
   }
 
   /** Return current installed state for catalog plugins. */
-  @Remote('installed')
   async installed(): Promise<readonly InstalledPlugin[]> {
     const manifest = await this.catalog()
     return projectInstalled(this.ctx.loader.entries() as unknown as readonly { options: { name?: string }; disabled?: boolean; fiber?: unknown }[], manifest)
   }
 
   /** Install one allowlisted plugin by catalog id. */
-  @Remote('install')
   async install(pluginId: string): Promise<PluginOperationResult> {
     return this.runOperation(pluginId, 'install')
   }
 
   /** Uninstall one allowlisted plugin by catalog id. */
-  @Remote('uninstall')
   async uninstall(pluginId: string): Promise<PluginOperationResult> {
     return this.runOperation(pluginId, 'uninstall')
   }
