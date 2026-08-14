@@ -4,5 +4,7 @@ dist/
 lib/
 .pnpm-store/
 coverage/
+tmp/
+*.tgz
 *.tsbuildinfo
 .DS_Store

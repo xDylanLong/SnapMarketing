@@ -1,6 +1,6 @@
 declare module '@deepseek-ai/cordis' {
   export class Context {
-    readonly loader: { entries(): readonly unknown[] }
+    readonly loader: { entries(): Iterable<unknown> }
   }
 }
 
@@ -26,7 +26,7 @@ declare module '@deepseek-ai/dsh-typert-protocol' {
   }
 }
 
-declare module '@deepseek-ai/dsh-api-gateway/client' {}
+declare module '@deepseek-ai/dsh-api-remotes/client' {}
 
 declare module '@deepseek-ai/dsh-client-ui-settings/client' {}
 

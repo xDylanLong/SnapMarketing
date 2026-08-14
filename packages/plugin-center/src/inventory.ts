@@ -9,11 +9,11 @@ interface LoaderEntry {
 
 /** Project current Loader entries onto known catalog plugins. */
 export function projectInstalled(
-  entries: readonly LoaderEntry[],
+  entries: Iterable<LoaderEntry>,
   manifest: PluginManifest,
 ): readonly InstalledPlugin[] {
   const byPackage = new Map(manifest.plugins.map(plugin => [packageNameFromSource(plugin.install.source), plugin]))
-  return entries.flatMap((entry) => {
+  return Array.from(entries).flatMap((entry) => {
     const moduleName = entry.options.name
     if (moduleName === undefined) return []
     const packageName = packageNameFromModuleName(moduleName)

@@ -13,6 +13,7 @@ const hostConfig: UserConfig = {
   dts: false,
   sourcemap: true,
   clean: true,
+  fixedExtension: false,
 }
 
 const clientConfig: UserConfig = {
