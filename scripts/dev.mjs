@@ -3,7 +3,7 @@ import { spawn } from 'node:child_process'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
-const repoRoot = dirname(fileURLToPath(new URL('..', import.meta.url)))
+const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const SIGNAL_CLEANUP_TIMEOUT_MS = 2_000
 
 /**
@@ -12,17 +12,22 @@ const SIGNAL_CLEANUP_TIMEOUT_MS = 2_000
  */
 export function resolveDevConfig({ env = process.env, repoRoot: root = repoRoot } = {}) {
   const resolvedRepoRoot = resolve(root)
+  const webPort = env.DSH_PORT?.trim() || '3081'
+  if (!/^\d+$/.test(webPort) || Number(webPort) < 1 || Number(webPort) > 65535) {
+    throw new Error(`Invalid DSH_PORT "${webPort}"; expected an integer from 1 to 65535.`)
+  }
   return {
     repoRoot: resolvedRepoRoot,
     harnessRoot: resolve(env.DSH_ROOT?.trim() || join(resolvedRepoRoot, '..', 'ChatGPT', 'deepseek-harness-demo')),
     dshHome: resolve(env.DSH_HOME?.trim() || join(resolvedRepoRoot, '.dev', 'dsh-home')),
+    webPort,
     skipHarnessBuild: env.DSH_SKIP_HARNESS_BUILD === '1',
   }
 }
 
 /**
  * Build every pnpm command used by the dev entry.
- * @param {{ repoRoot: string, harnessRoot: string, dshHome: string, skipHarnessBuild: boolean }} config
+ * @param {{ repoRoot: string, harnessRoot: string, dshHome: string, webPort: string, skipHarnessBuild: boolean }} config
  */
 export function buildDevCommands(config) {
   const prepare = [
@@ -33,7 +38,14 @@ export function buildDevCommands(config) {
   }
   prepare.push({
     cwd: config.harnessRoot,
-    argv: ['dsh', 'plugin', '--profile', 'web', 'add', `link:${config.repoRoot}`],
+    argv: [
+      'dsh',
+      'plugin',
+      '--profile',
+      'web',
+      'add',
+      `link:${join(config.repoRoot, 'packages', 'plugin-center')}`,
+    ],
   })
   return {
     prepare,
@@ -43,7 +55,7 @@ export function buildDevCommands(config) {
     },
     web: {
       cwd: config.harnessRoot,
-      argv: ['dsh', '--profile', 'web'],
+      argv: ['dsh', '--profile', 'web', '--port', config.webPort],
     },
   }
 }
