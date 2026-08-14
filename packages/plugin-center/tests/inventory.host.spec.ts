@@ -1,5 +1,8 @@
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { projectInstalled } from '../src/inventory.ts'
+import { projectInstalled, readProfileDependencyNames } from '../src/inventory.ts'
 import type { PluginManifest } from '../src/types.ts'
 
 const manifest: PluginManifest = {
@@ -28,5 +31,32 @@ describe('projectInstalled', () => {
       enabled: true,
       phase: 'active',
     }])
+  })
+
+  it('detects profile dependencies before the running Loader has reloaded them', () => {
+    const result = projectInstalled([], manifest, ['@example/search'])
+    expect(result).toEqual([{
+      pluginId: 'search',
+      packageName: '@example/search',
+      moduleName: '@example/search',
+      enabled: true,
+      phase: 'unobserved',
+    }])
+  })
+
+  it('reads dependency names from the active profile manifest', async () => {
+    const dshHome = await mkdtemp(join(tmpdir(), 'snapmarketing-inventory-'))
+    try {
+      const profileDir = join(dshHome, 'profiles', 'web')
+      await mkdir(profileDir, { recursive: true })
+      await writeFile(join(profileDir, 'package.json'), JSON.stringify({
+        dependencies: { '@example/search': '^1.0.0' },
+        optionalDependencies: { optional: '^1.0.0' },
+      }))
+      await expect(readProfileDependencyNames('web', dshHome)).resolves.toEqual(['@example/search', 'optional'])
+      await expect(readFile(join(profileDir, 'package.json'), 'utf8')).resolves.toContain('@example/search')
+    } finally {
+      await rm(dshHome, { recursive: true, force: true })
+    }
   })
 })

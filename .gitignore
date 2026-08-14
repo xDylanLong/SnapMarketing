@@ -5,6 +5,7 @@ lib/
 .pnpm-store/
 coverage/
 tmp/
+.playwright-cli/
 *.tgz
 *.tsbuildinfo
 .DS_Store

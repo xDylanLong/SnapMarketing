@@ -26,6 +26,24 @@ export interface PluginCenterConfig {
   readonly installer?: HarnessPluginInstaller
 }
 
+/** Version of the installed SnapMarketing package. */
+export interface SnapMarketingVersion {
+  readonly currentVersion: string
+}
+
+/** Result of checking the published SnapMarketing package version. */
+export interface SnapMarketingUpdateStatus extends SnapMarketingVersion {
+  readonly latestVersion: string
+  readonly updateAvailable: boolean
+}
+
+/** Result of updating SnapMarketing through the active DSH profile. */
+export interface SnapMarketingUpdateResult {
+  readonly status: 'updated' | 'failed'
+  readonly needsReload: boolean
+  readonly message: string
+}
+
 /** Current Loader projection for one catalog plugin. */
 export interface InstalledPlugin {
   readonly pluginId: string
@@ -47,6 +65,7 @@ export interface PluginOperationResult {
 export interface PluginCenterSnapshot {
   readonly manifest: PluginManifest
   readonly installed: readonly InstalledPlugin[]
+  readonly selfVersion?: SnapMarketingVersion
 }
 
 export type CatalogPlugin = PluginMetadata

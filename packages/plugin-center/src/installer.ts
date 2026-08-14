@@ -11,7 +11,7 @@ export interface DshCliInstallerOptions {
   readonly environment?: NodeJS.ProcessEnv
 }
 
-function execute(
+export function executeDshCommand(
   command: string,
   args: readonly string[],
   options: Pick<DshCliInstallerOptions, 'cwd' | 'timeoutMs' | 'environment'>,
@@ -25,7 +25,8 @@ function execute(
       windowsHide: true,
     }, (error, stdout, stderr) => {
       if (error !== null) {
-        resolve({ ok: false, message: error.message, stdout, stderr })
+        const diagnostics = [error.message, stderr.trim(), stdout.trim()].filter(Boolean).join('\n')
+        resolve({ ok: false, message: diagnostics, stdout, stderr })
         return
       }
       resolve({ ok: true, message: stdout.trim() || 'Harness plugin operation completed', stdout, stderr })
@@ -38,7 +39,7 @@ export function createDshCliInstaller(options: DshCliInstallerOptions): HarnessP
   const command = options.command ?? 'dsh'
   const commandArgs = options.commandArgs ?? []
   return {
-    install: source => execute(command, [...commandArgs, 'plugin', '--profile', options.profile, 'add', source], options),
-    uninstall: source => execute(command, [...commandArgs, 'plugin', '--profile', options.profile, 'remove', source], options),
+    install: source => executeDshCommand(command, [...commandArgs, 'plugin', '--profile', options.profile, 'add', '--workspace-root', source], options),
+    uninstall: source => executeDshCommand(command, [...commandArgs, 'plugin', '--profile', options.profile, 'remove', '--workspace-root', source], options),
   }
 }

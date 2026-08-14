@@ -7,7 +7,7 @@ describe('DSH client bundle configuration', () => {
       entry?: unknown
       format?: unknown
       platform?: unknown
-      noExternal?: unknown
+      deps?: unknown
       outputOptions?: unknown
     }
     const configs = (Array.isArray(config) ? config : [config]) as readonly InspectableConfig[]
@@ -30,8 +30,13 @@ describe('DSH client bundle configuration', () => {
     expect(outputOptions?.banner).toContain('@snapmarketing/dsh-plugin-center')
     expect(outputOptions?.footer).toContain('return module.exports')
 
-    const noExternal = clientConfig?.noExternal as ((id: string) => boolean | undefined) | undefined
-    expect(noExternal?.('zod')).toBe(true)
-    expect(noExternal?.('react')).toBeUndefined()
+    const deps = clientConfig?.deps as {
+      neverBundle?: unknown
+      alwaysBundle?: unknown
+    } | undefined
+    expect(deps?.neverBundle).toEqual(['react', 'react/jsx-runtime'])
+    const alwaysBundle = deps?.alwaysBundle as ((id: string) => boolean | undefined) | undefined
+    expect(alwaysBundle?.('zod')).toBe(true)
+    expect(alwaysBundle?.('react')).toBe(false)
   })
 })

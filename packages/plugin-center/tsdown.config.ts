@@ -25,8 +25,10 @@ const clientConfig: UserConfig = {
   dts: false,
   sourcemap: true,
   clean: false,
-  external: ['react', 'react/jsx-runtime'],
-  noExternal: (id: string) => id === 'react' || id === 'react/jsx-runtime' ? undefined : true,
+  deps: {
+    neverBundle: ['react', 'react/jsx-runtime'],
+    alwaysBundle: (id: string) => id !== 'react' && id !== 'react/jsx-runtime',
+  },
   outputOptions: {
     entryFileNames: 'client.js',
     banner: 'window.__ModuleLoader__.load({ id: "@snapmarketing/dsh-plugin-center", factory: (require) => {',
