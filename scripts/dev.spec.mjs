@@ -1,3 +1,5 @@
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { buildDevCommands, resolveDevConfig } from './dev.mjs'
 
@@ -9,7 +11,7 @@ describe('resolveDevConfig', () => {
   it('uses the sibling Harness checkout and project-local debug home by default', () => {
     const config = resolveDevConfig({ env: {}, repoRoot: '/work/SnapMarketing' })
     expect(config.harnessRoot).toBe('/work/ChatGPT/deepseek-harness-demo')
-    expect(config.dshHome).toBe('/work/SnapMarketing/.dev/dsh-home')
+    expect(config.dshHome).toBe(join(tmpdir(), 'snapmarketing-dsh-home'))
     expect(config.webPort).toBe('3081')
     expect(config.skipHarnessBuild).toBe(false)
   })

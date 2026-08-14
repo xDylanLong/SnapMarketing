@@ -13,7 +13,7 @@
 - Keep the current branch/worktree and unrelated WIP unchanged.
 - Do not add `concurrently` or another runtime dependency.
 - Default Harness checkout is the sibling-relative path `../ChatGPT/deepseek-harness-demo`; `DSH_ROOT` overrides it.
-- Default debug home is `.dev/dsh-home`; `DSH_HOME` overrides it.
+- Default debug home is the system temp directory `snapmarketing-dsh-home`; `DSH_HOME` overrides it. It must stay outside the SnapMarketing workspace because the Harness profile owns a nested `pnpm-workspace.yaml`.
 - Default Web port is `3081`; `DSH_PORT` overrides it and must be an integer from 1 to 65535.
 - `DSH_SKIP_HARNESS_BUILD=1` skips only the Harness build, not the SnapMarketing build or local plugin installation.
 - Client source changes use HMR; Host source and profile changes require restarting `pnpm dev`.

@@ -32,7 +32,7 @@ dsh plugin --profile web add @snapmarketing/dsh-plugin-center
 pnpm dev
 ```
 
-它会自动构建 SnapMarketing，把 `packages/plugin-center` 以 `link:` 安装到本地 `web` profile，并启动 Client bundle watcher 与 Harness Web。默认调试地址是 `http://127.0.0.1:3081`；修改 `src/client` 会触发 HMR，修改 Host 代码或 profile 配置后重新执行 `pnpm dev`。
+它会自动构建 SnapMarketing，把 `packages/plugin-center` 以 `link:` 安装到本地 `web` profile，并启动 Client bundle watcher 与 Harness Web。默认调试数据放在系统临时目录 `snapmarketing-dsh-home`，默认地址是 `http://127.0.0.1:3081`；修改 `src/client` 会触发 HMR，修改 Host 代码或 profile 配置后重新执行 `pnpm dev`。
 
 如果 Harness checkout 不在默认位置，可以覆盖：
 
