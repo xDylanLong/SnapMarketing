@@ -8,7 +8,7 @@ export default defineConfig({
     },
   },
   test: {
-    include: ['packages/**/tests/**/*.spec.ts', 'packages/**/tests/**/*.spec.tsx'],
+    include: ['packages/**/tests/**/*.spec.ts', 'packages/**/tests/**/*.spec.tsx', 'scripts/**/*.spec.mjs'],
     environmentMatchGlobs: [
       ['packages/plugin-center/tests/**/*.client.spec.tsx', 'jsdom'],
     ],
