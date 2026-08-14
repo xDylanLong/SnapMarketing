@@ -14,4 +14,16 @@ describe('createDshCliInstaller', () => {
     expect(result.ok).toBe(false)
     expect(result.message).toBeTruthy()
   })
+
+  it('prepends fixed launcher arguments before the Harness plugin command', async () => {
+    const installer = createDshCliInstaller({
+      command: process.execPath,
+      commandArgs: ['-e', 'process.stdout.write(process.argv.slice(1).join("|"))'],
+      profile: 'web',
+    })
+    await expect(installer.install('@example/plugin')).resolves.toMatchObject({
+      ok: true,
+      stdout: 'plugin|--profile|web|add|@example/plugin',
+    })
+  })
 })

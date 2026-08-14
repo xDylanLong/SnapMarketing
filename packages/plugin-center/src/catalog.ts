@@ -1,15 +1,18 @@
+import { readFile } from 'node:fs/promises'
 import { assertInstallable, parseManifest, type PluginManifest } from '@snapmarketing/plugin-manifest'
-import type { PluginCenterConfig } from './types.ts'
 
-export const DEFAULT_CATALOG_URL =
-  'https://raw.githubusercontent.com/xDylanLong/SnapMarketing/main/packages/plugin-center/registry/plugins.json'
+const BUNDLED_CATALOG_URL = new URL('../registry/plugins.json', import.meta.url)
 
-/** Fetch and validate a static GitHub-hosted catalog. */
-export async function fetchCatalog(config: PluginCenterConfig): Promise<PluginManifest> {
-  const fetchImpl = config.fetchImpl ?? fetch
-  const response = await fetchImpl(config.catalogUrl ?? DEFAULT_CATALOG_URL)
-  if (!response.ok) throw new Error(`catalog request failed with HTTP ${response.status}`)
-  const manifest = parseManifest(await response.json() as unknown)
+/** Read and validate the Manifest shipped in the installed plugin package. */
+export async function loadBundledCatalog(): Promise<PluginManifest> {
+  const body = await readFile(BUNDLED_CATALOG_URL, 'utf8')
+  let input: unknown
+  try {
+    input = JSON.parse(body) as unknown
+  } catch {
+    throw new Error('bundled catalog is not valid JSON')
+  }
+  const manifest = parseManifest(input)
   for (const plugin of manifest.plugins) assertInstallable(plugin)
   return manifest
 }

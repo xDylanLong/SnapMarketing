@@ -17,4 +17,6 @@ dsh plugin --profile web remove <Manifest install.source>
 
 Successful operations return `needsReload: true` because the running Harness process may need a reload before the newly composed plugin becomes live. Snap Plugin Marketing does not claim that a plugin is active until the Loader inventory reports it.
 
-For a deployment-specific catalog, replace `catalogUrl` in the profile patch with a public static JSON URL that follows Manifest V1.
+The Manifest is installed as `registry/plugins.json` inside the Plugin Center package and read from disk by the Host. Installation does not require a GitHub token or a catalog URL, and it does not download the Manifest at runtime.
+
+The Host accepts a `commandTimeoutMs` override; the default CLI operation limit is 120 seconds. Source checkouts can set `command` plus `commandArgs` to launch their local Harness CLI entry point instead of a globally installed `dsh` binary.

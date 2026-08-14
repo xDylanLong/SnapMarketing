@@ -18,12 +18,12 @@ export interface HarnessPluginInstaller {
 
 /** Configurable Host behavior for one Snap Plugin Marketing installation. */
 export interface PluginCenterConfig {
-  readonly catalogUrl?: string
   readonly profile?: string
   readonly command?: string
+  readonly commandArgs?: readonly string[]
+  readonly commandTimeoutMs?: number
   readonly cwd?: string
   readonly installer?: HarnessPluginInstaller
-  readonly fetchImpl?: typeof fetch
 }
 
 /** Current Loader projection for one catalog plugin. */
