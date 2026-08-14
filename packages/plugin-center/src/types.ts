@@ -16,7 +16,7 @@ export interface HarnessPluginInstaller {
   uninstall(source: string): Promise<InstallerResult>
 }
 
-/** Configurable Host behavior for one Plugin Center installation. */
+/** Configurable Host behavior for one Snap Plugin Marketing installation. */
 export interface PluginCenterConfig {
   readonly catalogUrl?: string
   readonly profile?: string

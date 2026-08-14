@@ -33,14 +33,14 @@ export const TYPERT_REMOTE = {
       result: { mode: 'strict', typeSymbol: '@snapmarketing/dsh-plugin-center#InstalledPlugin[]', schema: z.array(InstalledPluginSchema).readonly() },
     },
     {
-      id: '@snapmarketing/dsh-plugin-center#pluginCenter/install',
-      service: 'pluginCenter', namespace: 'pluginCenter', method: 'install', invocation: { kind: 'direct' },
+      id: '@snapmarketing/dsh-plugin-center#pluginCenter/installPlugin',
+      service: 'pluginCenter', namespace: 'pluginCenter', method: 'installPlugin', implementation: 'install', invocation: { kind: 'direct' },
       parameters: [{ name: 'pluginId', wire: 'pluginId', source: 'json', codec: { mode: 'strict', typeSymbol: 'string', schema: z.string() } }],
       result: { mode: 'strict', typeSymbol: '@snapmarketing/dsh-plugin-center#PluginOperationResult', schema: OperationSchema },
     },
     {
-      id: '@snapmarketing/dsh-plugin-center#pluginCenter/uninstall',
-      service: 'pluginCenter', namespace: 'pluginCenter', method: 'uninstall', invocation: { kind: 'direct' },
+      id: '@snapmarketing/dsh-plugin-center#pluginCenter/uninstallPlugin',
+      service: 'pluginCenter', namespace: 'pluginCenter', method: 'uninstallPlugin', implementation: 'uninstall', invocation: { kind: 'direct' },
       parameters: [{ name: 'pluginId', wire: 'pluginId', source: 'json', codec: { mode: 'strict', typeSymbol: 'string', schema: z.string() } }],
       result: { mode: 'strict', typeSymbol: '@snapmarketing/dsh-plugin-center#PluginOperationResult', schema: OperationSchema },
     },
@@ -51,8 +51,8 @@ declare module '@deepseek-ai/dsh-typert-protocol' {
   interface TypertRemoteMap {
       'pluginCenter/catalog': () => Promise<import('@deepseek-ai/dsh-typert-protocol').RemoteResult<PluginManifest>>
     'pluginCenter/installed': () => Promise<import('@deepseek-ai/dsh-typert-protocol').RemoteResult<readonly InstalledPlugin[]>>
-    'pluginCenter/install': (pluginId: string) => Promise<import('@deepseek-ai/dsh-typert-protocol').RemoteResult<PluginOperationResult>>
-    'pluginCenter/uninstall': (pluginId: string) => Promise<import('@deepseek-ai/dsh-typert-protocol').RemoteResult<PluginOperationResult>>
+    'pluginCenter/installPlugin': (pluginId: string) => Promise<import('@deepseek-ai/dsh-typert-protocol').RemoteResult<PluginOperationResult>>
+    'pluginCenter/uninstallPlugin': (pluginId: string) => Promise<import('@deepseek-ai/dsh-typert-protocol').RemoteResult<PluginOperationResult>>
   }
   interface TypertRemoteNamespaceMap {
     pluginCenter: import('@deepseek-ai/dsh-typert-protocol').TypertRemoteNamespace<'pluginCenter'>

@@ -75,9 +75,9 @@ export function PluginCenterTab({ load, install, uninstall }: PluginCenterTabPro
   if (state.status === 'error') return <div><p role="alert">加载插件目录失败：{state.message}</p><button type="button" onClick={refresh}>重试</button></div>
 
   return (
-    <section aria-label="SnapMarketing Plugin Center">
+    <section aria-label="Snap Plugin Marketing">
       <header>
-        <h2>Plugin Center</h2>
+        <h2>Snap Plugin Marketing</h2>
         <p>发现并安装 DeepSeek Harness 官方生态插件。</p>
       </header>
       <nav aria-label="插件分类">

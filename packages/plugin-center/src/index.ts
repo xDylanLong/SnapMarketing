@@ -13,7 +13,7 @@ import type {
   PluginOperationResult,
 } from './types.ts'
 
-/** Host Remote service backing the Plugin Center browser surface. */
+/** Host Remote service backing the Snap Plugin Marketing browser surface. */
 export class PluginCenterGateway extends TypertRemoteService {
   static inject = ['loader']
 

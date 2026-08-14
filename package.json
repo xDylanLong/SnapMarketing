@@ -2,7 +2,7 @@
   "name": "snapmarketing",
   "private": true,
   "version": "0.1.0",
-  "description": "Thin DeepSeek Harness Plugin Center for discovery, installation, and management",
+  "description": "Thin DeepSeek Harness Snap Plugin Marketing surface for discovery, installation, and management",
   "type": "module",
   "packageManager": "pnpm@10.4.1",
   "license": "Apache-2.0",
