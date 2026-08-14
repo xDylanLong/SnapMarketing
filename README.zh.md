@@ -26,6 +26,25 @@ dsh plugin --profile web add @snapmarketing/dsh-plugin-center
 
 ## 开发
 
+最简单的本地调试方式是直接启动隔离的 Harness Web 环境：
+
+```sh
+pnpm dev
+```
+
+它会自动构建 SnapMarketing，把 `packages/plugin-center` 以 `link:` 安装到本地 `web` profile，并启动 Client bundle watcher 与 Harness Web。默认调试地址是 `http://127.0.0.1:3081`；修改 `src/client` 会触发 HMR，修改 Host 代码或 profile 配置后重新执行 `pnpm dev`。
+
+如果 Harness checkout 不在默认位置，可以覆盖：
+
+```sh
+DSH_ROOT=/path/to/deepseek-harness-demo pnpm dev
+DSH_HOME=/tmp/snapmarketing-dsh-home pnpm dev
+DSH_PORT=4099 pnpm dev
+DSH_SKIP_HARNESS_BUILD=1 pnpm dev
+```
+
+常规静态检查仍可单独运行：
+
 ```sh
 pnpm install
 pnpm test

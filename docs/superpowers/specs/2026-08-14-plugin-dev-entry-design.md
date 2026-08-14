@@ -10,7 +10,8 @@
 
 - 使用已存在的 Harness 源码 checkout。
 - 使用项目内 `.dev/dsh-home` 作为默认 Harness 数据目录，避免污染用户 profile。
-- 首次启动前构建 SnapMarketing，并将当前 checkout 以 `link:` 安装到 `web` profile。
+- 首次启动前构建 SnapMarketing，并将 `packages/plugin-center` 以 `link:` 安装到 `web` profile。
+- 使用独立的 `3081` 端口，避免与 Harness 默认 `3080` 冲突。
 - 启动 SnapMarketing 的 `tsdown --watch`，持续重写 `lib/client.js`。
 - 启动 Harness 的 `web` profile。
 - 捕获 Ctrl-C 和子进程退出，清理同一调试会话启动的子进程。
@@ -24,7 +25,7 @@
 
 ## Architecture
 
-新增 `scripts/dev.mjs` 作为轻量进程编排器。Harness 根目录通过 `DSH_ROOT` 环境变量配置，默认使用当前已知的本地 checkout；调试数据目录通过 `DSH_HOME` 配置，默认指向 SnapMarketing 的 `.dev/dsh-home`。脚本按顺序执行：构建 SnapMarketing、构建 Harness（若用户没有显式跳过）、通过 `dsh plugin --profile web add link:<repo>` 安装本地插件、并发启动 Client watcher 与 Harness Web。
+新增 `scripts/dev.mjs` 作为轻量进程编排器。Harness 根目录通过 `DSH_ROOT` 环境变量配置，默认使用当前已知的本地 checkout；调试数据目录通过 `DSH_HOME` 配置，默认指向 SnapMarketing 的 `.dev/dsh-home`；Web 端口通过 `DSH_PORT` 配置，默认是 `3081`。脚本按顺序执行：构建 SnapMarketing、构建 Harness（若用户没有显式跳过）、通过 `dsh plugin --profile web add link:<repo>/packages/plugin-center` 安装本地插件、并发启动 Client watcher 与 Harness Web。
 
 脚本把可测试的路径和参数解析抽成纯函数，测试覆盖默认路径、环境变量覆盖、命令参数以及子进程失败时的错误信息。真正的 Harness 启动属于集成边界，验证时使用一次无 API key 的启动检查，并以可控退出结束。
 
@@ -39,6 +40,7 @@ pnpm dev
 ```sh
 DSH_ROOT=/path/to/deepseek-harness-demo pnpm dev
 DSH_HOME=/tmp/snapmarketing-dsh-home pnpm dev
+DSH_PORT=4099 pnpm dev
 DSH_SKIP_HARNESS_BUILD=1 pnpm dev
 ```
 
