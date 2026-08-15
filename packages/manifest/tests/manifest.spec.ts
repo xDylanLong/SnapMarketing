@@ -16,6 +16,8 @@ const manifest: PluginManifest = {
       hasUI: true,
       category: 'ui',
       tags: ['workspace'],
+      seoTagsZh: ['营销工作台'],
+      seoTagsEn: ['marketing workspace'],
       screenshots: ['https://example.com/workspace.png'],
       placement: { enabled: true, slots: ['conversation.view'], defaultSlot: 'conversation.view' },
     },

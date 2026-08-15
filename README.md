@@ -12,7 +12,7 @@ The project intentionally does not become a Marketplace backend. It does not hos
 
 - `@snapmarketing/plugin-manifest`: Manifest V1 schema, category checks, catalog filters, and install-source policy.
 - `@snapmarketing/dsh-plugin-center`: DSH Host and Client plugin with catalog, detail preview, install, uninstall, and installed-state views.
-- A static catalog at [`packages/plugin-center/registry/plugins.json`](packages/plugin-center/registry/plugins.json), published inside the Plugin Center package.
+- A marketing-only static catalog at [`packages/plugin-center/registry/plugins.json`](packages/plugin-center/registry/plugins.json), with bilingual SEO tags and a complete source backup at [`plugins.full.json`](packages/plugin-center/registry/plugins.full.json).
 
 ## Install into a DSH profile
 
@@ -36,6 +36,6 @@ pnpm build
 pnpm check:package
 ```
 
-Catalog updates are made directly in `packages/plugin-center/registry/plugins.json` and ship with the next package release.
+Set `GITHUB_TOKEN` and run `pnpm registry:collect` to refresh the complete backup and rebuild the curated marketing catalog. Run `pnpm registry:marketing` to rebuild only `plugins.json` from the existing backup. Only the marketing catalog ships with the package; installed clients never call GitHub at runtime.
 
 See [Manifest V1](docs/manifest-v1.md), [installation](docs/installation.md), and [catalog maintenance](docs/catalog-maintenance.md).

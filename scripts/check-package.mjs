@@ -22,6 +22,23 @@ for (const path of packages) {
 }
 const plugin = JSON.parse(await readFile('packages/plugin-center/registry/plugins.json', 'utf8'))
 if (plugin.schemaVersion !== '1.0' || !Array.isArray(plugin.plugins)) throw new Error('registry: invalid Manifest V1 root')
+const fullPlugin = JSON.parse(await readFile('packages/plugin-center/registry/plugins.full.json', 'utf8'))
+if (fullPlugin.schemaVersion !== '1.0' || !Array.isArray(fullPlugin.plugins)) {
+  throw new Error('registry backup: invalid Manifest V1 root')
+}
+if (fullPlugin.plugins.length <= plugin.plugins.length) {
+  throw new Error('registry backup: full catalog must contain more entries than the marketing catalog')
+}
+const fullIds = new Set(fullPlugin.plugins.map(entry => entry.id))
+for (const entry of plugin.plugins) {
+  if (!fullIds.has(entry.id)) throw new Error(`registry: marketing plugin is missing from full backup: ${entry.id}`)
+  if (!Array.isArray(entry.seoTagsZh) || entry.seoTagsZh.length < 1) {
+    throw new Error(`registry: ${entry.id} must include Chinese SEO tags`)
+  }
+  if (!Array.isArray(entry.seoTagsEn) || entry.seoTagsEn.length < 1) {
+    throw new Error(`registry: ${entry.id} must include English SEO tags`)
+  }
+}
 const clientBundle = await readFile('packages/plugin-center/lib/client.js', 'utf8')
 if (!clientBundle.startsWith('window.__ModuleLoader__.load({')) {
   throw new Error('plugin-center: client.js must register a Harness client module factory')

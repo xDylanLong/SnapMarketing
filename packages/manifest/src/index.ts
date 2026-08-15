@@ -52,6 +52,8 @@ export const PluginMetadataSchema = z.object({
   hasUI: z.boolean(),
   category: PluginCategorySchema,
   tags: z.array(z.string().min(1)).optional(),
+  seoTagsZh: z.array(z.string().min(1)).min(1).optional(),
+  seoTagsEn: z.array(z.string().min(1)).min(1).optional(),
   icon: url.optional(),
   screenshots: z.array(url).optional(),
   usage: UsageSchema.optional(),
