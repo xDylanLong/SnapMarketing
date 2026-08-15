@@ -1,8 +1,8 @@
 import { existsSync, mkdirSync } from 'node:fs'
-import { tmpdir } from 'node:os'
 import { spawn } from 'node:child_process'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
+import { resolveDshHome } from './dsh-home.mjs'
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const SIGNAL_CLEANUP_TIMEOUT_MS = 2_000
@@ -20,7 +20,7 @@ export function resolveDevConfig({ env = process.env, repoRoot: root = repoRoot 
   return {
     repoRoot: resolvedRepoRoot,
     harnessRoot: resolve(env.DSH_ROOT?.trim() || join(resolvedRepoRoot, '..', 'ChatGPT', 'deepseek-harness-demo')),
-    dshHome: resolve(env.DSH_HOME?.trim() || join(tmpdir(), 'snapmarketing-dsh-home')),
+    dshHome: resolveDshHome({ env }),
     webPort,
     skipHarnessBuild: env.DSH_SKIP_HARNESS_BUILD === '1',
   }

@@ -12,6 +12,8 @@
   },
   "scripts": {
     "dev": "node scripts/dev.mjs",
+    "dsh:add": "node scripts/dsh-plugin.mjs add",
+    "dsh:remove": "node scripts/dsh-plugin.mjs remove",
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "build": "pnpm -r build",

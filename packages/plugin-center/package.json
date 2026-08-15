@@ -17,7 +17,8 @@
   "files": [
     "lib",
     "cordis.patch.yml",
-    "registry/plugins.json"
+    "registry/plugins.json",
+    "assets"
   ],
   "scripts": {
     "build": "tsdown && tsc -p tsconfig.dts.json",

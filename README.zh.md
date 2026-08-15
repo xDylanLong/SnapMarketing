@@ -43,6 +43,15 @@ DSH_PORT=4099 pnpm dev
 DSH_SKIP_HARNESS_BUILD=1 pnpm dev
 ```
 
+如果只需要管理当前项目的插件，不需要再填写插件名：
+
+```sh
+pnpm dsh:add
+pnpm dsh:remove
+```
+
+这两个命令固定操作 `@snapmarketing/dsh-plugin-center` 的 `web` profile：添加时使用当前项目的本地 `link:` 路径，删除时使用当前项目的包名。它们默认与 `pnpm dev` 共用系统临时目录下的 `snapmarketing-dsh-home`，也支持通过 `DSH_ROOT` 和 `DSH_HOME` 覆盖。
+
 常规静态检查仍可单独运行：
 
 ```sh

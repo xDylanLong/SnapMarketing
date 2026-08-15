@@ -18,6 +18,9 @@ declare module '@deepseek-ai/dsh-typert-protocol' {
       readonly installed: () => Promise<RemoteResult<readonly import('./types.ts').InstalledPlugin[]>>
       readonly installPlugin: (pluginId: string) => Promise<RemoteResult<import('./types.ts').PluginOperationResult>>
       readonly uninstallPlugin: (pluginId: string) => Promise<RemoteResult<import('./types.ts').PluginOperationResult>>
+      readonly currentVersion: () => Promise<RemoteResult<import('./types.ts').SnapMarketingVersion>>
+      readonly updateStatus: () => Promise<RemoteResult<import('./types.ts').SnapMarketingUpdateStatus>>
+      readonly updateSelf: () => Promise<RemoteResult<import('./types.ts').SnapMarketingUpdateResult>>
     }
     : Record<string, never>
   export class TypertRemoteService {
