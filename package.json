@@ -18,7 +18,9 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "build": "pnpm -r build",
     "lint": "tsc -p tsconfig.json --noEmit",
-    "check:package": "node scripts/check-package.mjs"
+    "check:package": "node scripts/check-package.mjs",
+    "registry:collect": "node scripts/collect-topic-manifest.mjs && node scripts/build-marketing-manifest.mjs",
+    "registry:marketing": "node scripts/build-marketing-manifest.mjs"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "6.9.1",

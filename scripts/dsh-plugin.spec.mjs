@@ -24,7 +24,7 @@ describe('resolvePluginConfig', () => {
     })
 
     expect(config.harnessRoot).toBe(resolve('/tmp/harness'))
-    expect(config.env.DSH_HOME).toBe('/tmp/dsh-home')
+    expect(config.env.DSH_HOME).toBe(resolve('/tmp/dsh-home'))
   })
 })
 

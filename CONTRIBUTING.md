@@ -11,4 +11,4 @@ pnpm build
 pnpm check:package
 ```
 
-Manifest changes must include a valid `schemaVersion: "1.0"` document and keep `hasUI` consistent with `category`. Do not add arbitrary package URLs to the catalog.
+Manifest changes must include a valid `schemaVersion: "1.0"` document and keep `hasUI` consistent with `category`. Published marketing entries must exist in the full backup and include relevant, non-empty `seoTagsZh` and `seoTagsEn` arrays. Do not add arbitrary package URLs to the catalog.

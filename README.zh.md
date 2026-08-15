@@ -12,7 +12,7 @@ SnapMarketing 是面向 [DeepSeek Harness](https://github.com/deepseek-ai/deepse
 
 - `@snapmarketing/plugin-manifest`：Manifest V1 Schema、分类一致性校验、目录筛选和安装来源策略。
 - `@snapmarketing/dsh-plugin-center`：DSH Host/Client 插件，提供目录、详情预览、安装、卸载和已安装状态。
-- 随 Plugin Center 包一起发布的静态目录：[`packages/plugin-center/registry/plugins.json`](packages/plugin-center/registry/plugins.json)。
+- 随 Plugin Center 包发布的 marketing 专属静态目录：[`packages/plugin-center/registry/plugins.json`](packages/plugin-center/registry/plugins.json)，每条包含中英文 SEO 标签；全量源数据备份在 [`plugins.full.json`](packages/plugin-center/registry/plugins.full.json)。
 
 ## 安装到 DSH Profile
 
@@ -50,11 +50,7 @@ pnpm dsh:add
 pnpm dsh:remove
 ```
 
-这两个命令固定操作 `@snapmarketing/dsh-plugin-center` 的 `web` profile：添加时使用当前项目的本地 `link:` 路径，删除时使用当前项目的包名。它们默认与 `pnpm dev` 共用系统临时目录下的 `snapmarketing-dsh-home`，也支持通过 `DSH_ROOT` 和 `DSH_HOME` 覆盖；例如：
-
-```sh
-DSH_ROOT=/path/to/deepseek-harness-demo DSH_HOME=/tmp/snapmarketing-dsh-home pnpm dsh:add
-```
+这两个命令固定操作 `@snapmarketing/dsh-plugin-center` 的 `web` profile：添加时使用当前项目的本地 `link:` 路径，删除时使用当前项目的包名。它们默认与 `pnpm dev` 共用系统临时目录下的 `snapmarketing-dsh-home`，也支持通过 `DSH_ROOT` 和 `DSH_HOME` 覆盖。
 
 常规静态检查仍可单独运行：
 
@@ -66,6 +62,6 @@ pnpm build
 pnpm check:package
 ```
 
-目录更新直接修改 `packages/plugin-center/registry/plugins.json`，并随下一次插件包发布生效。
+设置 `GITHUB_TOKEN` 后运行 `pnpm registry:collect`，可刷新全量备份并重建 marketing 目录；只需从现有备份重建筛选结果时运行 `pnpm registry:marketing`。插件包仅发布 marketing 目录，安装后的客户端不会在运行时访问 GitHub。
 
 详见 [Manifest V1](docs/manifest-v1.md)、[安装说明](docs/installation.md) 和 [目录维护](docs/catalog-maintenance.md)。
