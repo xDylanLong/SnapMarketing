@@ -1,76 +1,71 @@
 <p align="center">
-  <img src="packages/plugin-center/assets/snapmarketing-logo.png" width="96" alt="dsh-snapmarketing logo">
+  <img src="packages/plugin-center/assets/snapmarketing-logo.png" width="96" alt="SnapMarketing logo">
 </p>
 
-# dsh-snapmarketing
+# SnapMarketing
 
-English | [中文](README.zh.md)
+中文 | [English](README.en.md)
 
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
-A thin, local-first plugin discovery and management surface for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness).
+面向 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 的营销插件中心：在 Harness 内发现、搜索、安装和管理营销相关插件。
 
-Open Harness Settings → **插件市场**, find a plugin, inspect its source, and install it through Harness's existing plugin path.
+SnapMarketing 是一个建立在 Harness 之上的轻量入口，沿用 Harness 已有的 Profile、安装器和插件运行时，让营销插件保持在 Harness 的正常生命周期内。
 
-- `@snapmarketing/plugin-manifest`: Manifest V1 schema, category checks, catalog filters, and install-source policy.
-- `@snapmarketing/dsh-plugin-center`: DSH Host and Client plugin with catalog, detail preview, install, uninstall, and installed-state views.
-- A marketing-only static catalog at [`packages/plugin-center/registry/plugins.json`](packages/plugin-center/registry/plugins.json), with bilingual SEO tags and a complete source backup at [`plugins.full.json`](packages/plugin-center/registry/plugins.full.json).
-
-## Install into a DSH profile
-
-After publishing the package, install it with the existing Harness plugin path:
+## 安装
 
 ```sh
 dsh plugin --profile web add @snapmarketing/dsh-plugin-center
 ```
 
-Restart `dsh web`, then open **Settings → 插件市场**.
+重启 `dsh web`，然后打开 **设置 → 插件市场**。
 
-dsh-snapmarketing is a plugin inside Harness, not a second application or package manager. It uses the existing Harness profile and installer, so the installed plugin remains part of Harness's normal runtime and lifecycle.
+如果你想先了解产品定位和界面，可以访问 [SnapMarketing 官网](https://github.com/xDylanLong/SnapMarketing-Landing)。本仓库是安装与运行 Plugin Center 的代码仓库。
 
-## What you get
+## 你会得到什么
 
-- **Discover and search** — browse the bundled catalog, search by name or description, and inspect repository and version metadata.
-- **Install with one click** — choose a catalog entry and let Harness perform the package operation; the UI shows progress and the actual operation result.
-- **Installed state** — the page reads the active Harness inventory instead of treating a button click as proof that a plugin is live.
-- **UI or capability plugins** — catalog metadata makes the plugin's expected role clear; a UI plugin owns its own surface, while a capability plugin is used through Harness, Agent, or its declared workflow.
-- **Refresh-aware feedback** — when Harness needs a reload after installation, dsh-snapmarketing says so instead of claiming the change is already active.
+- **营销插件目录**——随包发布精选的营销插件目录，展示名称、描述、分类、版本、仓库和安装来源。
+- **搜索与筛选**——按插件名称和描述搜索，快速找到适合当前营销工作流的插件。
+- **一键安装与卸载**——选择目录条目后，由 Harness 执行真实的包操作；界面展示进度和操作结果。
+- **真实的已安装状态**——读取当前 Harness Profile 的插件清单，不把一次按钮点击当成插件已经生效。
+- **界面型与能力型插件**——通过目录元数据说明插件用途；界面型插件拥有自己的 UI，能力型插件通过 Harness、Agent 或声明的工作流使用。
+- **明确的刷新提示**——安装后如果 Harness 需要刷新，页面会明确提示待生效状态。
 
-## How it works
+## 工作方式
 
 ```text
-Bundled Manifest
-        ↓
-dsh-snapmarketing 插件市场
-        ↓  validated plugin id
-Harness existing installer
-        ↓
-Harness Loader and plugin runtime
+随包发布的营销目录
+          ↓
+SnapMarketing 插件市场
+          ↓  校验后的插件 id
+Harness 现有安装器
+          ↓
+Harness Loader 与插件运行时
 ```
 
-The catalog is shipped as `registry/plugins.json` inside `@snapmarketing/dsh-plugin-center`. The Host validates the Manifest, resolves the selected id to its approved package source, and delegates the operation to Harness. The browser cannot submit an arbitrary package URL or install source.
+目录文件位于 [`packages/plugin-center/registry/plugins.json`](packages/plugin-center/registry/plugins.json)，随 `@snapmarketing/dsh-plugin-center` 一起发布。Host 会校验 Manifest，把用户选择的插件 id 解析为已确认的包来源，再交给 Harness 执行安装或卸载。已安装的客户端不会在运行时访问 GitHub。
 
-## Why it stays thin
+## 安全与边界
 
-dsh-snapmarketing is intentionally a surface layer around Harness. It does not:
+SnapMarketing 有意只做 Harness 上面的一层入口，不负责：
 
-- host plugin packages or run a marketplace backend;
-- create accounts, process payments, or accept arbitrary uploads;
-- inspect or sandbox third-party plugin source code;
-- replace Harness's package manager, Loader, UI slots, or plugin lifecycle.
+- 托管插件包或建设独立的 Marketplace 后台；
+- 创建账号、处理支付或接受任意上传；
+- 检查、分析或沙箱化第三方插件源码；
+- 替代 Harness 的包管理器、Loader、UI Slot 或插件生命周期。
 
-The catalog is an allowlist, not an endorsement. Install third-party plugins only when you trust their source and permissions.
+Manifest 策略会拒绝 HTTP 地址、本地路径和任意 Git 来源等未批准的安装来源。目录是精选 allowlist，不等于对第三方插件背书；请只安装你信任来源和权限的插件。
 
-## Development
+## 开发
 
 ```sh
 pnpm install
 pnpm dev
 ```
 
-`pnpm dev` builds dsh-snapmarketing, links the local Plugin Center into a web profile, starts the Harness Web process, and watches the client bundle. The default local Harness home is an isolated temporary directory named `dsh-snapmarketing-dsh-home`; the default address is `http://127.0.0.1:3081`.
+`pnpm dev` 会构建 SnapMarketing，把本地 Plugin Center 以 link 方式安装到 web Profile，启动 Harness Web，并监听客户端 bundle。默认使用名为 `dsh-snapmarketing-dsh-home` 的隔离临时目录，默认地址是 `http://127.0.0.1:3081`。
 
-Useful overrides:
+常用覆盖参数：
 
 ```sh
 DSH_ROOT=/path/to/deepseek-harness-demo pnpm dev
@@ -79,14 +74,14 @@ DSH_PORT=4099 pnpm dev
 DSH_SKIP_HARNESS_BUILD=1 pnpm dev
 ```
 
-For the current project only:
+只管理当前项目的插件时，可以直接运行：
 
 ```sh
 pnpm dsh:add
 pnpm dsh:remove
 ```
 
-Run the release checks with:
+常规检查：
 
 ```sh
 pnpm test
@@ -95,18 +90,17 @@ pnpm build
 pnpm check:package
 ```
 
-Set `GITHUB_TOKEN` and run `pnpm registry:collect` to refresh the complete backup and rebuild the curated marketing catalog. Run `pnpm registry:marketing` to rebuild only `plugins.json` from the existing backup. Only the marketing catalog ships with the package; installed clients never call GitHub at runtime.
+## 目录与文档
 
-## Catalog and Manifest
+- [营销插件目录](packages/plugin-center/registry/plugins.json)
+- [完整目录备份](packages/plugin-center/registry/plugins.full.json)
+- [Manifest V1](docs/manifest-v1.md)
+- [目录维护](docs/catalog-maintenance.md)
+- [贡献指南](CONTRIBUTING.md)
+- [SnapMarketing-Landing 官网仓库](https://github.com/xDylanLong/SnapMarketing-Landing)
 
-The source-controlled catalog lives at [`packages/plugin-center/registry/plugins.json`](packages/plugin-center/registry/plugins.json). Edit it directly when adding or updating an entry, then verify the package name, repository, version, category, and install source.
+新增或更新目录条目时，请确认包名、仓库、版本、分类和安装来源准确。保持 Thin Layer 边界：复用 Harness 的安装和 UI API，不新增平行的包管理或布局系统。
 
-The Manifest only accepts approved package specifiers. HTTP URLs, local paths, and arbitrary Git sources are rejected. See [Manifest V1](docs/manifest-v1.md) and [catalog maintenance](docs/catalog-maintenance.md).
-
-## Contributing
-
-Keep the Thin Layer boundary intact: reuse Harness installation and UI APIs, keep catalog validation separate from runtime behavior, and do not add a parallel package or layout system. See [CONTRIBUTING.md](CONTRIBUTING.md).
-
-## License
+## 许可证
 
 Apache-2.0
