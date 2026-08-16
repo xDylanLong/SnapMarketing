@@ -29,12 +29,12 @@ export async function readSnapMarketingVersion(): Promise<SnapMarketingVersion> 
   const body = await readFile(PACKAGE_MANIFEST_URL, 'utf8')
   const manifest = JSON.parse(body) as PackageManifest
   if (typeof manifest.version !== 'string' || parseVersion(manifest.version) === undefined) {
-    throw new Error('SnapMarketing package.json does not contain a valid semver version')
+    throw new Error('dsh-snapmarketing package.json does not contain a valid semver version')
   }
   return { currentVersion: manifest.version }
 }
 
-/** Create the fixed-package update flow used by the SnapMarketing UI. */
+/** Create the fixed-package update flow used by the dsh-snapmarketing UI. */
 export function createSnapMarketingUpdater(options: DshCliInstallerOptions): SnapMarketingUpdater {
   const command = options.command ?? 'dsh'
   const commandArgs = options.commandArgs ?? []
@@ -49,9 +49,9 @@ export function createSnapMarketingUpdater(options: DshCliInstallerOptions): Sna
     check: async () => {
       const current = await readSnapMarketingVersion()
       const result = await run(['view', SNAPMARKETING_PACKAGE_NAME, 'version', '--json'])
-      if (!result.ok) throw new Error(result.message ?? '无法查询 SnapMarketing 最新版本')
+      if (!result.ok) throw new Error(result.message ?? '无法查询 dsh-snapmarketing 最新版本')
       const latestVersion = parseRegistryVersion(result.stdout ?? result.message ?? '')
-      if (latestVersion === undefined) throw new Error('npm 返回的 SnapMarketing 版本无效')
+      if (latestVersion === undefined) throw new Error('npm 返回的 dsh-snapmarketing 版本无效')
       return {
         ...current,
         latestVersion,
@@ -64,13 +64,13 @@ export function createSnapMarketingUpdater(options: DshCliInstallerOptions): Sna
         return {
           status: 'failed',
           needsReload: false,
-          message: result.message ?? 'SnapMarketing 更新失败',
+          message: result.message ?? 'dsh-snapmarketing 更新失败',
         }
       }
       return {
         status: 'updated',
         needsReload: true,
-        message: 'SnapMarketing 已更新，请重启或刷新 Harness',
+        message: 'dsh-snapmarketing 已更新，请重启或刷新 Harness',
       }
     },
   }

@@ -1,14 +1,14 @@
-# SnapMarketing Plugin Center Design
+# dsh-snapmarketing Plugin Center Design
 
 ## Goal
 
-SnapMarketing is an Apache-2.0 DeepSeek Harness plugin that provides a thin discovery, installation, and management entry point for an allowlisted plugin catalog.
+dsh-snapmarketing is an Apache-2.0 DeepSeek Harness plugin that provides a thin discovery, installation, and management entry point for an allowlisted plugin catalog.
 
 ## Product boundary
 
-The public catalog is a static GitHub-hosted `plugins.json` document. SnapMarketing validates and displays that document, but it does not host plugin packages, accept submissions, inspect source code, infer UI capabilities, provide accounts, process payments, or implement review workflows.
+The public catalog is a static GitHub-hosted `plugins.json` document. dsh-snapmarketing validates and displays that document, but it does not host plugin packages, accept submissions, inspect source code, infer UI capabilities, provide accounts, process payments, or implement review workflows.
 
-Harness remains responsible for loading and running plugins. SnapMarketing only passes the Manifest's `install.source` to the existing `dsh plugin add` or `dsh plugin remove` capability through a host adapter. A plugin UI remains owned by the installed plugin; SnapMarketing never injects DOM or replaces Harness's slot system.
+Harness remains responsible for loading and running plugins. dsh-snapmarketing only passes the Manifest's `install.source` to the existing `dsh plugin add` or `dsh plugin remove` capability through a host adapter. A plugin UI remains owned by the installed plugin; dsh-snapmarketing never injects DOM or replaces Harness's slot system.
 
 ## Repository architecture
 

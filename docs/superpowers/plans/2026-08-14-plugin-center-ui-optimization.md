@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- 页面内不再重复显示 `Snap Plugin Marketing` 标题。
+- 页面内不再重复显示 `dsh-snapmarketing` 标题。
 - 搜索区域保持单行：左侧显示 `发现 DeepSeek Harness 生态插件` 和小号总数量，右侧为搜索框与其右侧的搜索按钮。
 - 列表一行一个插件，只显示名称、简短描述、版本/类型、状态和 `查看`/`安装` 操作。
 - `查看` 打开 Manifest 的 `repository` 链接；安装成功后显示 `已安装`，不在本次列表暴露卸载按钮。
@@ -77,14 +77,14 @@ const snapshot: PluginCenterSnapshot = {
 
 - [ ] **Step 2: Add a failing test for the compact list, repository view link, and removal of the duplicate title**
 
-Render the tab and assert that `Snap Plugin Marketing` is not a heading, the discovery copy and `12 个插件` are visible, exactly one row exists for the first plugin, and the first row contains an external link with the matching repository URL.
+Render the tab and assert that `dsh-snapmarketing` is not a heading, the discovery copy and `12 个插件` are visible, exactly one row exists for the first plugin, and the first row contains an external link with the matching repository URL.
 
 ```tsx
 it('renders a compact list and opens each repository from 查看', async () => {
   renderTab()
   await waitFor(() => expect(screen.getByText('Plugin 1')).toBeTruthy())
 
-  expect(screen.queryByRole('heading', { name: 'Snap Plugin Marketing' })).toBeNull()
+  expect(screen.queryByRole('heading', { name: 'dsh-snapmarketing' })).toBeNull()
   expect(screen.getByText('发现 DeepSeek Harness 生态插件')).toBeTruthy()
   expect(screen.getByText('12 个插件')).toBeTruthy()
   expect(document.querySelectorAll('[data-plugin-id]')).toHaveLength(10)
@@ -175,7 +175,7 @@ Call `filterPlugins(snapshot.manifest.plugins, { query }, installedIds)` without
 
 - [ ] **Step 3: Render the one-line search area and remove the duplicate title/category controls**
 
-Use a `header` with class `sm-plugin-center__toolbar` containing the discovery copy, small count, search input and button. The input must be a controlled searchbox with `aria-label="搜索插件"`; the form submit handler calls `submitSearch` so Enter works. Do not render an `h2` named `Snap Plugin Marketing` or the old category nav.
+Use a `header` with class `sm-plugin-center__toolbar` containing the discovery copy, small count, search input and button. The input must be a controlled searchbox with `aria-label="搜索插件"`; the form submit handler calls `submitSearch` so Enter works. Do not render an `h2` named `dsh-snapmarketing` or the old category nav.
 
 ```tsx
 <form className="sm-plugin-center__toolbar" onSubmit={event => { event.preventDefault(); submitSearch() }}>

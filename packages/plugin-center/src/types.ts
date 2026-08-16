@@ -16,7 +16,7 @@ export interface HarnessPluginInstaller {
   uninstall(source: string): Promise<InstallerResult>
 }
 
-/** Configurable Host behavior for one Snap Plugin Marketing installation. */
+/** Configurable Host behavior for one dsh-snapmarketing installation. */
 export interface PluginCenterConfig {
   readonly profile?: string
   readonly command?: string
@@ -26,18 +26,18 @@ export interface PluginCenterConfig {
   readonly installer?: HarnessPluginInstaller
 }
 
-/** Version of the installed SnapMarketing package. */
+/** Version of the installed dsh-snapmarketing package. */
 export interface SnapMarketingVersion {
   readonly currentVersion: string
 }
 
-/** Result of checking the published SnapMarketing package version. */
+/** Result of checking the published dsh-snapmarketing package version. */
 export interface SnapMarketingUpdateStatus extends SnapMarketingVersion {
   readonly latestVersion: string
   readonly updateAvailable: boolean
 }
 
-/** Result of updating SnapMarketing through the active DSH profile. */
+/** Result of updating dsh-snapmarketing through the active DSH profile. */
 export interface SnapMarketingUpdateResult {
   readonly status: 'updated' | 'failed'
   readonly needsReload: boolean

@@ -1,10 +1,10 @@
-# SnapMarketing Plugin Dev Entry Implementation Plan
+# dsh-snapmarketing Plugin Dev Entry Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Make `pnpm dev` start an isolated Harness Web profile plus a watched SnapMarketing client bundle for local plugin debugging.
+**Goal:** Make `pnpm dev` start an isolated Harness Web profile plus a watched dsh-snapmarketing client bundle for local plugin debugging.
 
-**Architecture:** Add a dependency-free Node process orchestrator at `scripts/dev.mjs`. It resolves the Harness checkout and isolated `DSH_HOME`, runs the two repositories' preparation commands sequentially, then runs the SnapMarketing tsdown watcher and Harness Web process concurrently with signal-aware cleanup. Export pure command/path helpers so the orchestration contract is covered without launching real services in unit tests.
+**Architecture:** Add a dependency-free Node process orchestrator at `scripts/dev.mjs`. It resolves the Harness checkout and isolated `DSH_HOME`, runs the two repositories' preparation commands sequentially, then runs the dsh-snapmarketing tsdown watcher and Harness Web process concurrently with signal-aware cleanup. Export pure command/path helpers so the orchestration contract is covered without launching real services in unit tests.
 
 **Tech Stack:** Node.js ESM, `node:child_process`, `node:path`, Vitest, pnpm, tsdown, DeepSeek Harness CLI.
 
@@ -13,9 +13,9 @@
 - Keep the current branch/worktree and unrelated WIP unchanged.
 - Do not add `concurrently` or another runtime dependency.
 - Default Harness checkout is the sibling-relative path `../ChatGPT/deepseek-harness-demo`; `DSH_ROOT` overrides it.
-- Default debug home is the system temp directory `snapmarketing-dsh-home`; `DSH_HOME` overrides it. It must stay outside the SnapMarketing workspace because the Harness profile owns a nested `pnpm-workspace.yaml`.
+- Default debug home is the system temp directory `dsh-snapmarketing-dsh-home`; `DSH_HOME` overrides it. It must stay outside the dsh-snapmarketing workspace because the Harness profile owns a nested `pnpm-workspace.yaml`.
 - Default Web port is `3081`; `DSH_PORT` overrides it and must be an integer from 1 to 65535.
-- `DSH_SKIP_HARNESS_BUILD=1` skips only the Harness build, not the SnapMarketing build or local plugin installation.
+- `DSH_SKIP_HARNESS_BUILD=1` skips only the Harness build, not the dsh-snapmarketing build or local plugin installation.
 - Client source changes use HMR; Host source and profile changes require restarting `pnpm dev`.
 
 ---
@@ -40,9 +40,9 @@ import { buildDevCommands, resolveDevConfig } from './dev.mjs'
 
 describe('resolveDevConfig', () => {
   it('uses the sibling Harness checkout and project-local debug home by default', () => {
-    const config = resolveDevConfig({ env: {}, repoRoot: '/work/SnapMarketing' })
+    const config = resolveDevConfig({ env: {}, repoRoot: '/work/dsh-snapmarketing' })
     expect(config.harnessRoot).toBe('/work/ChatGPT/deepseek-harness-demo')
-    expect(config.dshHome).toBe('/work/SnapMarketing/.dev/dsh-home')
+    expect(config.dshHome).toBe('/work/dsh-snapmarketing/.dev/dsh-home')
     expect(config.skipHarnessBuild).toBe(false)
   })
 
@@ -53,7 +53,7 @@ describe('resolveDevConfig', () => {
         DSH_HOME: '/tmp/dsh-home',
         DSH_SKIP_HARNESS_BUILD: '1',
       },
-      repoRoot: '/work/SnapMarketing',
+      repoRoot: '/work/dsh-snapmarketing',
     })
     expect(config.harnessRoot).toBe('/tmp/harness')
     expect(config.dshHome).toBe('/tmp/dsh-home')
@@ -64,33 +64,33 @@ describe('resolveDevConfig', () => {
 describe('buildDevCommands', () => {
   it('prepares the linked web profile and starts both live processes', () => {
     const commands = buildDevCommands({
-      repoRoot: '/work/SnapMarketing',
+      repoRoot: '/work/dsh-snapmarketing',
       harnessRoot: '/work/ChatGPT/deepseek-harness-demo',
-      dshHome: '/work/SnapMarketing/.dev/dsh-home',
+      dshHome: '/work/dsh-snapmarketing/.dev/dsh-home',
       skipHarnessBuild: false,
     })
     expect(commands.prepare).toEqual([
-      { cwd: '/work/SnapMarketing', argv: ['build'] },
+      { cwd: '/work/dsh-snapmarketing', argv: ['build'] },
       { cwd: '/work/ChatGPT/deepseek-harness-demo', argv: ['run', 'build'] },
       {
         cwd: '/work/ChatGPT/deepseek-harness-demo',
-        argv: ['dsh', 'plugin', '--profile', 'web', 'add', 'link:/work/SnapMarketing/packages/plugin-center'],
+        argv: ['dsh', 'plugin', '--profile', 'web', 'add', 'link:/work/dsh-snapmarketing/packages/plugin-center'],
       },
     ])
-    expect(commands.watch).toEqual({ cwd: '/work/SnapMarketing', argv: ['--filter', '@snapmarketing/dsh-plugin-center', 'exec', 'tsdown', '--watch'] })
+    expect(commands.watch).toEqual({ cwd: '/work/dsh-snapmarketing', argv: ['--filter', '@snapmarketing/dsh-plugin-center', 'exec', 'tsdown', '--watch'] })
     expect(commands.web).toEqual({ cwd: '/work/ChatGPT/deepseek-harness-demo', argv: ['dsh', '--profile', 'web'] })
   })
 
   it('does not include the Harness build when explicitly skipped', () => {
     const commands = buildDevCommands({
-      repoRoot: '/work/SnapMarketing',
+      repoRoot: '/work/dsh-snapmarketing',
       harnessRoot: '/work/ChatGPT/deepseek-harness-demo',
       dshHome: '/tmp/dsh-home',
       skipHarnessBuild: true,
     })
     expect(commands.prepare.map(command => command.argv)).toEqual([
       ['build'],
-      ['dsh', 'plugin', '--profile', 'web', 'add', 'link:/work/SnapMarketing/packages/plugin-center'],
+      ['dsh', 'plugin', '--profile', 'web', 'add', 'link:/work/dsh-snapmarketing/packages/plugin-center'],
     ])
   })
 })
@@ -153,7 +153,7 @@ Add `.dev/` to `.gitignore` so the isolated Harness home and any local runtime s
 
 Run: `pnpm exec vitest run scripts/dev.spec.mjs`
 
-Expected: PASS with no warnings. Then run `pnpm typecheck` and `pnpm build` from the SnapMarketing root.
+Expected: PASS with no warnings. Then run `pnpm typecheck` and `pnpm build` from the dsh-snapmarketing root.
 
 - [ ] **Step 6: Commit the implementation**
 

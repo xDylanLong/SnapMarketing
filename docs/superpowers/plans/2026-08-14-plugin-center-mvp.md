@@ -1,4 +1,4 @@
-# SnapMarketing Plugin Center MVP Implementation Plan
+# dsh-snapmarketing Plugin Center MVP Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -14,7 +14,7 @@
 - Manifest V1 uses `schemaVersion: "1.0"`, ISO `updatedAt`, and the PRD plugin fields.
 - `hasUI: true` must map to `category: "ui"`; `hasUI: false` must map to `category: "capability"`.
 - Only static public Manifest data is trusted as catalog input; the Client cannot submit arbitrary package sources.
-- Harness owns plugin loading and UI slots; SnapMarketing does not reimplement the runtime, package manager, or DOM injection.
+- Harness owns plugin loading and UI slots; dsh-snapmarketing does not reimplement the runtime, package manager, or DOM injection.
 - The default installer delegates to `dsh plugin --profile <profile> add/remove`.
 - P0 includes catalog loading, categories, details, previews, installation, installed state, and Harness integration; P1 includes search, tags, placement metadata, and uninstall.
 - Accounts, submissions, moderation, comments, ratings, rankings, payments, source analysis, and Marketplace backend are outside this release.
@@ -92,6 +92,6 @@
 - Git metadata only; no source changes after the release gate unless verification finds a defect.
 
 - [ ] Initialize Git on `main`, inspect the full diff, and create an intentional initial commit.
-- [ ] Check `gh auth status` and create the public repository `SnapMarketing` with the Apache-2.0 source.
+- [ ] Check `gh auth status` and create the public repository `dsh-snapmarketing` with the Apache-2.0 source.
 - [ ] Push `main`, verify the remote URL and public visibility, and record the published repository URL in the final handoff.
 - [ ] Re-run `git status --short --branch` and verify the working tree is clean before claiming publication.

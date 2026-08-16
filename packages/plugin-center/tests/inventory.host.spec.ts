@@ -45,7 +45,7 @@ describe('projectInstalled', () => {
   })
 
   it('reads dependency names from the active profile manifest', async () => {
-    const dshHome = await mkdtemp(join(tmpdir(), 'snapmarketing-inventory-'))
+    const dshHome = await mkdtemp(join(tmpdir(), 'dsh-snapmarketing-inventory-'))
     try {
       const profileDir = join(dshHome, 'profiles', 'web')
       await mkdir(profileDir, { recursive: true })

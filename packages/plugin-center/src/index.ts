@@ -16,7 +16,7 @@ import type {
   SnapMarketingVersion,
 } from './types.ts'
 
-/** Host Remote service backing the Snap Plugin Marketing browser surface. */
+/** Host Remote service backing the dsh-snapmarketing browser surface. */
 export class PluginCenterGateway extends TypertRemoteService {
   static inject = ['loader']
 
@@ -71,17 +71,17 @@ export class PluginCenterGateway extends TypertRemoteService {
     return this.operationCoordinator.uninstall(pluginId)
   }
 
-  /** Return the locally installed SnapMarketing version without contacting npm. */
+  /** Return the locally installed dsh-snapmarketing version without contacting npm. */
   async currentVersion(): Promise<SnapMarketingVersion> {
     return this.selfUpdater.currentVersion()
   }
 
-  /** Check npm for a newer SnapMarketing package. */
+  /** Check npm for a newer dsh-snapmarketing package. */
   async updateStatus(): Promise<SnapMarketingUpdateStatus> {
     return this.selfUpdater.check()
   }
 
-  /** Update only SnapMarketing itself through the active DSH profile. */
+  /** Update only dsh-snapmarketing itself through the active DSH profile. */
   async updateSelf(): Promise<SnapMarketingUpdateResult> {
     return this.selfUpdater.update()
   }

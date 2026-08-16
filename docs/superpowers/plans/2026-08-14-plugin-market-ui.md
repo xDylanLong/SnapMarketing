@@ -1,8 +1,8 @@
-# SnapMarketing 插件市场 UI Implementation Plan
+# dsh-snapmarketing 插件市场 UI Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** 将 SnapMarketing 从 Harness 的“插件”设置分区移出，作为 Agent 预设下方的独立“插件市场”设置页，并呈现带产品头部的无分类插件列表。
+**Goal:** 将 dsh-snapmarketing 从 Harness 的“插件”设置分区移出，作为 Agent 预设下方的独立“插件市场”设置页，并呈现带产品头部的无分类插件列表。
 
 **Architecture:** 复用现有 `PluginCenterTab`、目录加载和安装 Remote，只把注册点从 `settings.plugins.tab` 改成顶层 `settings.section`。页面保留搜索、分页、安装反馈和仓库查看；`PluginCard` 变成不读取 placement 状态的纯插件行。产品 logo 作为包内压缩 PNG，并以内联 data URL 进入浏览器 client bundle，避免浏览器 CJS loader 依赖 Node URL shim。
 
@@ -12,7 +12,7 @@
 
 - 旧 `settings.plugins.tab` 贡献必须移除；只注册顶层 `settings.section`。
 - 新入口 id 为 `plugin-market`，label 为 `插件市场`，order 为 `21`，紧跟 Agent 预设。
-- 页面顶部必须显示产品 logo 和 `SnapMarketing`；第二行显示“发现 DeepSeek Harness 生态插件”、数量、搜索框和“搜索”按钮。
+- 页面顶部必须显示产品 logo 和 `dsh-snapmarketing`；第二行显示“发现 DeepSeek Harness 生态插件”、数量、搜索框和“搜索”按钮。
 - 列表不显示分类筛选、UI/工具插件标识、slot、显示位置或 placement 控件。
 - 保留目录加载、提交式搜索、每页 10 条分页、仓库查看、安装进度、错误反馈和已安装状态。
 - 只修改本次需求涉及的文件；保留工作区现有其他修改，不执行 reset、checkout 或清理操作。
@@ -66,8 +66,8 @@ const snapshot: PluginCenterSnapshot = {
 The page test must wait for `Plugin 1`, then assert the product header, discovery row, first-page row count, and absence of the removed UI concepts:
 
 ```tsx
-expect(screen.getByRole('heading', { name: 'SnapMarketing' })).toBeTruthy()
-expect(screen.getByAltText('SnapMarketing 产品 logo')).toBeTruthy()
+expect(screen.getByRole('heading', { name: 'dsh-snapmarketing' })).toBeTruthy()
+expect(screen.getByAltText('dsh-snapmarketing 产品 logo')).toBeTruthy()
 expect(screen.getByText('发现 DeepSeek Harness 生态插件')).toBeTruthy()
 expect(screen.getByText('12 个插件')).toBeTruthy()
 expect(document.querySelectorAll('[data-plugin-id]')).toHaveLength(10)
@@ -159,8 +159,8 @@ Render this header before the discovery/search form:
 
 ```tsx
 <header className="sm-plugin-center__brand">
-  <img src={SNAPMARKETING_LOGO_URL} alt="SnapMarketing 产品 logo" />
-  <h1>SnapMarketing</h1>
+  <img src={SNAPMARKETING_LOGO_URL} alt="dsh-snapmarketing 产品 logo" />
+  <h1>dsh-snapmarketing</h1>
 </header>
 ```
 

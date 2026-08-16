@@ -1,6 +1,6 @@
 # Catalog maintenance
 
-The published catalog is the marketing-only Manifest at `packages/plugin-center/registry/plugins.json`. It is bundled inside `@snapmarketing/dsh-plugin-center` and is read from the installed package at runtime. The complete collected catalog is preserved separately at `packages/plugin-center/registry/plugins.full.json` as the source backup.
+The dsh-snapmarketing published catalog is the marketing-only Manifest at `packages/plugin-center/registry/plugins.json`. It is bundled inside `@snapmarketing/dsh-plugin-center` and is read from the installed package at runtime. The complete collected catalog is preserved separately at `packages/plugin-center/registry/plugins.full.json` as the source backup.
 
 Refresh both files from the complete GitHub [`dsh-plugin` topic](https://github.com/topics/dsh-plugin):
 

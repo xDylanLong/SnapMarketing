@@ -1,14 +1,14 @@
 {
-  "name": "snapmarketing",
+  "name": "dsh-snapmarketing",
   "private": true,
   "version": "0.1.0",
-  "description": "Thin DeepSeek Harness Snap Plugin Marketing surface for discovery, installation, and management",
+  "description": "dsh-snapmarketing is a thin DeepSeek Harness surface for discovering, installing, and managing allowlisted plugins",
   "type": "module",
   "packageManager": "pnpm@10.4.1",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/xDylanLong/SnapMarketing.git"
+    "url": "git+https://github.com/xDylanLong/dsh-snapmarketing.git"
   },
   "scripts": {
     "dev": "node scripts/dev.mjs",

@@ -1,7 +1,7 @@
 {
   "name": "@snapmarketing/plugin-manifest",
   "version": "0.1.0",
-  "description": "Manifest V1 schema and catalog policy for SnapMarketing",
+  "description": "Manifest V1 schema and catalog policy for dsh-snapmarketing",
   "type": "module",
   "license": "Apache-2.0",
   "main": "lib/index.js",

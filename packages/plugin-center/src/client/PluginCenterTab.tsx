@@ -176,9 +176,9 @@ export function PluginCenterTab({ load, install, uninstall, updateStatus, update
   return (
     <section className="sm-plugin-center" aria-label="插件市场">
       <header className="sm-plugin-center__brand">
-        <img src={SNAPMARKETING_LOGO_URL} alt="SnapMarketing 产品 logo" />
+        <img src={SNAPMARKETING_LOGO_URL} alt="dsh-snapmarketing 产品 logo" />
         <div className="sm-plugin-center__brand-copy">
-          <h1>SnapMarketing</h1>
+          <h1>dsh-snapmarketing</h1>
         </div>
         {updateStatus !== undefined && updateSelfRequest !== undefined ? (
           <div className="sm-plugin-center__update">
@@ -193,7 +193,7 @@ export function PluginCenterTab({ load, install, uninstall, updateStatus, update
       {selfUpdate.message ? <p className={`sm-plugin-center__update-message sm-plugin-center__update-message--${selfUpdate.status}`} role={selfUpdate.status === 'error' ? 'alert' : undefined}>{selfUpdate.message}</p> : null}
       <form className="sm-plugin-center__toolbar" onSubmit={event => { event.preventDefault(); submitSearch() }}>
         <div className="sm-plugin-center__intro">
-          <p>发现最好的营销插件</p>
+          <p>发现并管理 DeepSeek Harness 插件</p>
           <span className="sm-plugin-center__count">{plugins.length} 个插件</span>
         </div>
         <div className="sm-plugin-center__search">
@@ -252,7 +252,7 @@ export function PluginCenterTab({ load, install, uninstall, updateStatus, update
 function getUpdateErrorMessage(error: unknown): string {
   const message = error instanceof Error ? error.message : String(error)
   if (message.includes('HTTP 404') && message.includes('/api/pluginCenter/')) {
-    return '当前 Harness 尚未加载新版 SnapMarketing，请重启 Harness 后重试'
+    return '当前 Harness 尚未加载新版 dsh-snapmarketing，请重启 Harness 后重试'
   }
   return message
 }

@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add `pnpm dsh:add` and `pnpm dsh:remove` commands that manage the current SnapMarketing plugin in the DSH web profile without a plugin-name argument.
+**Goal:** Add `pnpm dsh:add` and `pnpm dsh:remove` commands that manage the current dsh-snapmarketing plugin in the DSH web profile without a plugin-name argument.
 
 **Architecture:** Add a small dependency-free ESM command runner with pure command/config helpers and a single subprocess boundary. Root package scripts pass fixed actions (`add` or `remove`); the runner resolves the DSH checkout, uses the current repository's plugin path for add, and uses the fixed package name for remove.
 
@@ -13,7 +13,7 @@
 - The public commands are exactly `pnpm dsh:add` and `pnpm dsh:remove`.
 - The commands operate only on `@snapmarketing/dsh-plugin-center`; callers do not provide a plugin name.
 - The DSH profile is fixed to `web`.
-- `DSH_ROOT` overrides the default sibling checkout path; when omitted, `DSH_HOME` defaults to the same system-temporary `snapmarketing-dsh-home` used by `pnpm dev`, while an explicit value is preserved.
+- `DSH_ROOT` overrides the default sibling checkout path; when omitted, `DSH_HOME` defaults to the same system-temporary `dsh-snapmarketing-dsh-home` used by `pnpm dev`, while an explicit value is preserved.
 - Preserve unrelated working-tree changes.
 
 ---
@@ -29,7 +29,7 @@
 
 - [ ] **Step 1: Write tests for fixed add/remove arguments**
 
-Assert that add produces `{ cwd: '/work/ChatGPT/deepseek-harness-demo', argv: ['dsh', 'plugin', '--profile', 'web', 'add', 'link:/work/SnapMarketing/packages/plugin-center'] }` and remove produces the same prefix with `['remove', '@snapmarketing/dsh-plugin-center']`.
+Assert that add produces `{ cwd: '/work/ChatGPT/deepseek-harness-demo', argv: ['dsh', 'plugin', '--profile', 'web', 'add', 'link:/work/dsh-snapmarketing/packages/plugin-center'] }` and remove produces the same prefix with `['remove', '@snapmarketing/dsh-plugin-center']`.
 
 - [ ] **Step 2: Write tests for config and checkout validation**
 

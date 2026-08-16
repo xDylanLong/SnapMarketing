@@ -1,7 +1,7 @@
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 
-const DEFAULT_DSH_HOME = 'snapmarketing-dsh-home'
+const DEFAULT_DSH_HOME = 'dsh-snapmarketing-dsh-home'
 
 /**
  * Resolve the shared isolated development home used by plugin management and pnpm dev.

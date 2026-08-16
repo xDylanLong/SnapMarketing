@@ -1,4 +1,4 @@
-# SnapMarketing is a thin layer over the profile's existing Harness runtime.
+# dsh-snapmarketing is a thin layer over the profile's existing Harness runtime.
 # The catalog is bundled with the plugin; only Harness runtime options belong
 # in the profile patch.
 - insert:

@@ -8,7 +8,7 @@ import { PLUGIN_CENTER_STYLES } from './styles.ts'
 
 export type { PluginCenterTabInjected, PluginCenterTabProps } from './PluginCenterTab.tsx'
 
-/** Services required by the Snap Plugin Marketing browser surface. */
+/** Services required by the dsh-snapmarketing browser surface. */
 export const inject = ['slots', 'remote']
 
 const STYLE_SELECTOR = 'style[data-snapmarketing-plugin-center]'
@@ -23,7 +23,7 @@ function mountStyles(): () => void {
   return () => { style.remove() }
 }
 
-/** Register the lazy SnapMarketing Plugin Market page in Harness Settings. */
+/** Register the lazy dsh-snapmarketing plugin market page in Harness Settings. */
 export async function apply(ctx: ClientContext): Promise<() => Promise<void>> {
   const disposeRemote = await ctx.remote.$mount(TYPERT_REMOTE)
   const disposeStyles = mountStyles()

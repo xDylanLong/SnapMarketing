@@ -4,7 +4,7 @@ import { join, resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { buildPluginCommand, resolvePluginConfig, validateHarnessRoot } from './dsh-plugin.mjs'
 
-const fixtureRepoRoot = resolve('/work/SnapMarketing')
+const fixtureRepoRoot = resolve('/work/dsh-snapmarketing')
 const fixtureHarnessRoot = resolve('/work/ChatGPT/deepseek-harness-demo')
 
 describe('resolvePluginConfig', () => {
@@ -14,7 +14,7 @@ describe('resolvePluginConfig', () => {
     expect(config.repoRoot).toBe(fixtureRepoRoot)
     expect(config.harnessRoot).toBe(fixtureHarnessRoot)
     expect(config.pluginRoot).toBe(join(fixtureRepoRoot, 'packages', 'plugin-center'))
-    expect(config.env.DSH_HOME).toBe(join(tmpdir(), 'snapmarketing-dsh-home'))
+    expect(config.env.DSH_HOME).toBe(join(tmpdir(), 'dsh-snapmarketing-dsh-home'))
   })
 
   it('allows the Harness checkout to be overridden', () => {
@@ -65,7 +65,7 @@ describe('buildPluginCommand', () => {
 
 describe('validateHarnessRoot', () => {
   it('accepts a Harness checkout with the required CLI files', () => {
-    const harnessRoot = mkdtempSync(join(tmpdir(), 'snapmarketing-dsh-plugin-'))
+    const harnessRoot = mkdtempSync(join(tmpdir(), 'dsh-snapmarketing-dsh-plugin-'))
     mkdirSync(join(harnessRoot, 'apps', 'cli', 'src'), { recursive: true })
     writeFileSync(join(harnessRoot, 'package.json'), '{}')
     writeFileSync(join(harnessRoot, 'apps', 'cli', 'src', 'bin.ts'), '')
