@@ -20,7 +20,7 @@ dsh plugin --profile web add @snapmarketing/dsh-plugin-center
 
 重启 `dsh web`，然后打开 **设置 → 插件市场**。
 
-如果你想先了解产品定位和界面，可以访问 [SnapMarketing 官网](https://github.com/xDylanLong/SnapMarketing-Landing)。本仓库是安装与运行 Plugin Center 的代码仓库。
+如果你想先了解产品定位和界面，可以访问 [dsh-snapmarketing 官网](https://dsh-snapmarketing.com)。本仓库是安装与运行 Plugin Center 的代码仓库。
 
 ## 你会得到什么
 

@@ -20,7 +20,7 @@ dsh plugin --profile web add @snapmarketing/dsh-plugin-center
 
 Restart `dsh web`, then open **Settings → Plugin Market**.
 
-For the product overview and interface, visit the [SnapMarketing landing page](https://github.com/xDylanLong/SnapMarketing-Landing). This repository contains the installation and runtime code for Plugin Center.
+For the product overview and interface, visit the [dsh-snapmarketing website](https://dsh-snapmarketing.com). This repository contains the installation and runtime code for Plugin Center.
 
 ## What you get
 
