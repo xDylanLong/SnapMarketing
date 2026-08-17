@@ -10,7 +10,7 @@ The Plugin Center consumes a static JSON document with this root:
 }
 ```
 
-Each plugin has `id`, `name`, `description`, `author`, `repository`, `version`, `install`, `hasUI`, and `category`. `longDescription`, `tags`, `seoTagsZh`, `seoTagsEn`, `icon`, `screenshots`, `usage`, and `placement` are optional. The published marketing catalog fills both SEO tag arrays for every entry: `seoTagsZh` contains Chinese search phrases and `seoTagsEn` contains English search phrases.
+Each plugin has `id`, `name`, `description`, `author`, `repository`, `version`, `install`, `hasUI`, and `category`. `longDescription`, `tags`, `marketingCategories`, `seoTagsZh`, `seoTagsEn`, `icon`, `screenshots`, `usage`, and `placement` are optional. `marketingCategories` contains one or more marketing workflow facets such as `市场调研`, `内容营销`, `邮件营销`, `视觉素材`, or `数据分析`. The published marketing catalog fills both SEO tag arrays for every entry: `seoTagsZh` contains Chinese search phrases and `seoTagsEn` contains English search phrases.
 
 `hasUI: true` requires `category: "ui"`; `hasUI: false` requires `category: "capability"`. Placement metadata is only valid for UI plugins. The current installer accepts only npm package specifiers in `install.source`; HTTP URLs, local paths, and arbitrary Git sources are rejected.
 

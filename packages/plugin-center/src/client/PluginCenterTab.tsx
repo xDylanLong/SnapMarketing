@@ -25,6 +25,23 @@ type ViewState =
 const PAGE_SIZE = 10
 type PaginationItem = number | 'ellipsis'
 
+interface MarketingCategoryItem {
+  readonly label: string
+  readonly count: number
+}
+
+function getMarketingCategoryItems(plugins: readonly PluginMetadata[]): readonly MarketingCategoryItem[] {
+  const counts = new Map<string, number>()
+  for (const plugin of plugins) {
+    for (const category of plugin.marketingCategories ?? []) {
+      counts.set(category, (counts.get(category) ?? 0) + 1)
+    }
+  }
+  return [...counts.entries()]
+    .sort(([left], [right]) => left.localeCompare(right, 'zh-Hans-CN'))
+    .map(([label, count]) => ({ label, count }))
+}
+
 function getPaginationItems(currentPage: number, pageCount: number): readonly PaginationItem[] {
   const pageNumbers = new Set<number>([1, pageCount])
   for (let pageNumber = currentPage - 2; pageNumber <= currentPage + 2; pageNumber += 1) {
@@ -46,6 +63,7 @@ export function PluginCenterTab({ load, install, uninstall, updateStatus, update
   const [state, setState] = useState<ViewState>({ status: 'loading' })
   const [queryDraft, setQueryDraft] = useState('')
   const [query, setQuery] = useState('')
+  const [marketingCategory, setMarketingCategory] = useState<string | undefined>()
   const [page, setPage] = useState(1)
   const [busy, setBusy] = useState<ReadonlySet<string>>(new Set())
   const [messages, setMessages] = useState<ReadonlyMap<string, string>>(new Map())
@@ -77,11 +95,19 @@ export function PluginCenterTab({ load, install, uninstall, updateStatus, update
   const installedIds = useMemo(() => new Set(
     state.status === 'ready' ? state.snapshot.installed.map(plugin => plugin.pluginId) : [],
   ), [state])
+  const marketingCategories = useMemo(
+    () => state.status === 'ready' ? getMarketingCategoryItems(state.snapshot.manifest.plugins) : [],
+    [state],
+  )
   const plugins = useMemo(
     () => state.status === 'ready'
-      ? filterPlugins(state.snapshot.manifest.plugins, { query }, installedIds)
+      ? filterPlugins(
+        state.snapshot.manifest.plugins,
+        { query, ...(marketingCategory === undefined ? {} : { marketingCategory }) },
+        installedIds,
+      )
       : [],
-    [installedIds, query, state],
+    [installedIds, marketingCategory, query, state],
   )
   const pageCount = Math.max(1, Math.ceil(plugins.length / PAGE_SIZE))
   const visiblePlugins = plugins.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
@@ -193,7 +219,7 @@ export function PluginCenterTab({ load, install, uninstall, updateStatus, update
       {selfUpdate.message ? <p className={`sm-plugin-center__update-message sm-plugin-center__update-message--${selfUpdate.status}`} role={selfUpdate.status === 'error' ? 'alert' : undefined}>{selfUpdate.message}</p> : null}
       <form className="sm-plugin-center__toolbar" onSubmit={event => { event.preventDefault(); submitSearch() }}>
         <div className="sm-plugin-center__intro">
-          <p>发现并管理 DeepSeek Harness 插件</p>
+          <p>发现最好的营销插件</p>
           <span className="sm-plugin-center__count">{plugins.length} 个插件</span>
         </div>
         <div className="sm-plugin-center__search">
@@ -208,6 +234,30 @@ export function PluginCenterTab({ load, install, uninstall, updateStatus, update
           <button className="sm-button sm-button--md sm-button--primary" type="submit">搜索</button>
         </div>
       </form>
+      {marketingCategories.length > 0 ? (
+        <nav className="sm-plugin-center__categories" aria-label="营销场景分类">
+          <button
+            className="sm-filter-button"
+            type="button"
+            aria-pressed={marketingCategory === undefined}
+            onClick={() => { setMarketingCategory(undefined); setPage(1) }}
+          >
+            全部 <span>{state.snapshot.manifest.plugins.length}</span>
+          </button>
+          {marketingCategories.map(item => (
+            <button
+              className="sm-filter-button"
+              key={item.label}
+              type="button"
+              aria-label={`${item.label} ${item.count}`}
+              aria-pressed={marketingCategory === item.label}
+              onClick={() => { setMarketingCategory(item.label); setPage(1) }}
+            >
+              {item.label} <span>{item.count}</span>
+            </button>
+          ))}
+        </nav>
+      ) : null}
       {plugins.length === 0 ? <p className="sm-plugin-center__state">没有匹配的插件。</p> : (
         <>
           <div className="sm-plugin-center__grid">

@@ -88,6 +88,30 @@ export const MARKETING_PLUGIN_SEO = {
   },
 }
 
+/** Stable workflow facets used by the Plugin Center's clickable filters. */
+export const MARKETING_PLUGIN_CATEGORIES = {
+  'zseven-w-dsh-openpencil': ['视觉素材', '广告与投放'],
+  'anysearch-anysearch-dsh': ['市场调研', 'SEO/GEO'],
+  'dsh-email': ['邮件营销', '营销自动化'],
+  'dsh-humanizer': ['内容营销'],
+  'dsh-report-html': ['数据分析', '营销自动化'],
+  'dsh-web-search-pro': ['市场调研', '社交媒体', 'SEO/GEO'],
+  'huanlin-dsh-plugin-aigc-canvas': ['视觉素材', '广告与投放'],
+  'dsh-pixluna': ['视觉素材', '内容营销'],
+  'yangzhe1003-dsh-web-search-firecrawl': ['市场调研', 'SEO/GEO'],
+  'dsh-all-search': ['市场调研', 'SEO/GEO'],
+  'dsh-rss': ['内容营销', '社交媒体', '市场调研'],
+  'dsh-tavily-search': ['市场调研', 'SEO/GEO'],
+  'dsh-web-search-brave': ['市场调研', 'SEO/GEO'],
+  'dsh-web-search-tavily': ['市场调研', 'SEO/GEO'],
+  'tonydua-dsh-web-search-exa': ['市场调研', 'SEO/GEO'],
+  'bocha-ai-dsh-web-search-bocha': ['市场调研', 'SEO/GEO'],
+  'dsh-nanobananapro': ['视觉素材', '广告与投放'],
+  'dsh-seedance2': ['视频营销', '广告与投放'],
+  'dsh-web-access': ['市场调研', '内容营销'],
+  'dsh-web-search-tokenrhythm': ['市场调研', 'SEO/GEO'],
+}
+
 export function createMarketingManifest(fullManifest) {
   if (fullManifest?.schemaVersion !== '1.0' || !Array.isArray(fullManifest.plugins)) {
     throw new Error('source must be a Manifest V1 document')
@@ -100,8 +124,13 @@ export function createMarketingManifest(fullManifest) {
     .filter(plugin => Object.hasOwn(MARKETING_PLUGIN_SEO, plugin.id))
     .map((plugin) => {
       const seo = MARKETING_PLUGIN_SEO[plugin.id]
+      const marketingCategories = stringArray(plugin.marketingCategories)
+        ?? MARKETING_PLUGIN_CATEGORIES[plugin.id]
+      if (marketingCategories === undefined || marketingCategories.length === 0) {
+        throw new Error(`${plugin.id}.marketingCategories must contain at least one category`)
+      }
       validateSeoTags(plugin.id, seo)
-      return { ...plugin, seoTagsZh: seo.seoTagsZh, seoTagsEn: seo.seoTagsEn }
+      return { ...plugin, marketingCategories, seoTagsZh: seo.seoTagsZh, seoTagsEn: seo.seoTagsEn }
     })
   return { ...fullManifest, plugins }
 }
@@ -126,6 +155,12 @@ function validateSeoTags(id, seo) {
   if (!seo.seoTagsEn.every(tag => /^[\x20-\x7e]+$/u.test(tag))) {
     throw new Error(`${id}.seoTagsEn must contain English tags`)
   }
+}
+
+function stringArray(value) {
+  return Array.isArray(value) && value.every(item => typeof item === 'string' && item.trim() !== '')
+    ? value
+    : undefined
 }
 
 const isEntrypoint = process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])

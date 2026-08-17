@@ -16,6 +16,7 @@ describe('published registry', () => {
     expect(manifest.plugins.some(plugin => !plugin.hasUI)).toBe(true)
     expect(new Set(manifest.plugins.map(plugin => plugin.repository)).size).toBe(manifest.plugins.length)
     for (const plugin of manifest.plugins) {
+      expect(plugin.marketingCategories?.length).toBeGreaterThanOrEqual(1)
       expect(plugin.seoTagsZh?.length).toBeGreaterThanOrEqual(5)
       expect(plugin.seoTagsEn?.length).toBeGreaterThanOrEqual(5)
     }

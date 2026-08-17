@@ -16,6 +16,7 @@ const manifest: PluginManifest = {
       hasUI: true,
       category: 'ui',
       tags: ['workspace'],
+      marketingCategories: ['内容营销', '营销自动化'],
       seoTagsZh: ['营销工作台'],
       seoTagsEn: ['marketing workspace'],
       screenshots: ['https://example.com/workspace.png'],
@@ -59,7 +60,12 @@ describe('filterPlugins', () => {
     expect(filterPlugins(manifest.plugins, { category: 'ui' })).toHaveLength(1)
     expect(filterPlugins(manifest.plugins, { query: 'research' })).toHaveLength(1)
     expect(filterPlugins(manifest.plugins, { tag: 'workspace' })).toHaveLength(1)
+    expect(filterPlugins(manifest.plugins, { marketingCategory: '内容营销' })).toHaveLength(1)
     expect(filterPlugins(manifest.plugins, { category: 'installed' }, new Set(['search'])))
       .toEqual([manifest.plugins[1]])
+  })
+
+  it('includes marketing categories in search text', () => {
+    expect(filterPlugins(manifest.plugins, { query: '营销自动化' })).toEqual([manifest.plugins[0]])
   })
 })

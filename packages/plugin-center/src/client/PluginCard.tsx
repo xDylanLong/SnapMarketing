@@ -28,6 +28,11 @@ export function PluginCard({ plugin, installed, busy, onInstall, progress, messa
           <p className="sm-card__meta">v{plugin.version}</p>
         </div>
         <p className="sm-card__description">{plugin.description}</p>
+        {plugin.marketingCategories?.length ? (
+          <div className="sm-card__categories" aria-label="营销场景分类">
+            {plugin.marketingCategories.map(category => <span key={category}>{category}</span>)}
+          </div>
+        ) : null}
         {progress ? (
           <div className="sm-card__progress" aria-label={`${plugin.name} 安装进度`}>
             <div className="sm-card__progress-header"><span>{progress.label}</span><span>{progress.percent}%</span></div>

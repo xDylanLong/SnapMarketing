@@ -21,6 +21,10 @@
       "tags": [
         "openpencil"
       ],
+      "marketingCategories": [
+        "视觉素材",
+        "广告与投放"
+      ],
       "seoTagsZh": [
         "营销视觉设计",
         "品牌素材设计",
@@ -58,6 +62,10 @@
         "typescript",
         "web-search"
       ],
+      "marketingCategories": [
+        "市场调研",
+        "SEO/GEO"
+      ],
       "seoTagsZh": [
         "SEO关键词研究",
         "市场趋势分析",
@@ -92,6 +100,10 @@
       "tags": [
         "email",
         "imap"
+      ],
+      "marketingCategories": [
+        "邮件营销",
+        "营销自动化"
       ],
       "seoTagsZh": [
         "邮件营销",
@@ -130,6 +142,9 @@
         "deai",
         "novel-writing"
       ],
+      "marketingCategories": [
+        "内容营销"
+      ],
       "seoTagsZh": [
         "中文内容优化",
         "营销文案润色",
@@ -163,6 +178,10 @@
       "category": "capability",
       "tags": [
         "data-analysis"
+      ],
+      "marketingCategories": [
+        "数据分析",
+        "营销自动化"
       ],
       "seoTagsZh": [
         "营销数据报告",
@@ -198,6 +217,11 @@
       "tags": [
         "web-search"
       ],
+      "marketingCategories": [
+        "市场调研",
+        "社交媒体",
+        "SEO/GEO"
+      ],
       "seoTagsZh": [
         "社交媒体监听",
         "SEO关键词研究",
@@ -229,6 +253,10 @@
       },
       "hasUI": true,
       "category": "ui",
+      "marketingCategories": [
+        "视觉素材",
+        "广告与投放"
+      ],
       "seoTagsZh": [
         "AI营销素材",
         "创意内容生成",
@@ -260,6 +288,10 @@
       },
       "hasUI": true,
       "category": "ui",
+      "marketingCategories": [
+        "视觉素材",
+        "内容营销"
+      ],
       "seoTagsZh": [
         "营销图片素材",
         "品牌视觉素材",
@@ -294,6 +326,10 @@
       "tags": [
         "web-search"
       ],
+      "marketingCategories": [
+        "市场调研",
+        "SEO/GEO"
+      ],
       "seoTagsZh": [
         "网站内容抓取",
         "SEO竞品分析",
@@ -325,6 +361,10 @@
       },
       "hasUI": false,
       "category": "capability",
+      "marketingCategories": [
+        "市场调研",
+        "SEO/GEO"
+      ],
       "seoTagsZh": [
         "多源搜索营销",
         "SEO关键词挖掘",
@@ -356,6 +396,11 @@
       },
       "hasUI": false,
       "category": "capability",
+      "marketingCategories": [
+        "内容营销",
+        "社交媒体",
+        "市场调研"
+      ],
       "seoTagsZh": [
         "内容监测",
         "行业资讯追踪",
@@ -387,6 +432,10 @@
       },
       "hasUI": false,
       "category": "capability",
+      "marketingCategories": [
+        "市场调研",
+        "SEO/GEO"
+      ],
       "seoTagsZh": [
         "免费营销搜索",
         "SEO关键词发现",
@@ -423,6 +472,10 @@
         "brave",
         "web-search"
       ],
+      "marketingCategories": [
+        "市场调研",
+        "SEO/GEO"
+      ],
       "seoTagsZh": [
         "Brave搜索营销",
         "SEO关键词调研",
@@ -458,6 +511,10 @@
         "agent-plugin",
         "tavily",
         "web-search"
+      ],
+      "marketingCategories": [
+        "市场调研",
+        "SEO/GEO"
       ],
       "seoTagsZh": [
         "Tavily营销搜索",
@@ -497,6 +554,10 @@
         "mcp",
         "web-search"
       ],
+      "marketingCategories": [
+        "市场调研",
+        "SEO/GEO"
+      ],
       "seoTagsZh": [
         "Exa语义搜索",
         "SEO内容发现",
@@ -534,6 +595,10 @@
         "web-search",
         "web-search-api",
         "bocha-ai"
+      ],
+      "marketingCategories": [
+        "市场调研",
+        "SEO/GEO"
       ],
       "seoTagsZh": [
         "中文营销搜索",
@@ -573,6 +638,10 @@
         "image-generation",
         "nano-banana",
         "video-generation"
+      ],
+      "marketingCategories": [
+        "视觉素材",
+        "广告与投放"
       ],
       "seoTagsZh": [
         "AI图片生成",
@@ -614,6 +683,10 @@
         "seedance",
         "video-generation"
       ],
+      "marketingCategories": [
+        "视频营销",
+        "广告与投放"
+      ],
       "seoTagsZh": [
         "AI视频营销",
         "短视频生成",
@@ -645,6 +718,10 @@
       },
       "hasUI": true,
       "category": "ui",
+      "marketingCategories": [
+        "市场调研",
+        "内容营销"
+      ],
       "seoTagsZh": [
         "营销网页研究",
         "多渠道内容采集",
@@ -676,6 +753,10 @@
       },
       "hasUI": false,
       "category": "capability",
+      "marketingCategories": [
+        "市场调研",
+        "SEO/GEO"
+      ],
       "seoTagsZh": [
         "AI营销搜索",
         "实时市场研究",

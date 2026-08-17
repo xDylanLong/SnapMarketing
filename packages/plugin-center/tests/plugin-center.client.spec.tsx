@@ -31,12 +31,13 @@ const snapshot: PluginCenterSnapshot = {
     updatedAt: '2026-08-14T00:00:00Z',
     plugins: [
       ...Array.from({ length: 10 }, (_, index) => makePlugin(index + 1)),
-      makePlugin(11),
+      makePlugin(11, { marketingCategories: ['内容营销'] }),
       makePlugin(12, {
         id: 'ui-plugin',
         name: 'UI Plugin',
         hasUI: true,
         category: 'ui',
+        marketingCategories: ['营销自动化'],
         placement: { enabled: true, slots: ['settings.sidebar', 'conversation.view'], defaultSlot: 'settings.sidebar' },
       }),
     ],
@@ -70,7 +71,7 @@ describe('PluginCenterTab', () => {
     const logo = screen.getByAltText('dsh-snapmarketing 产品 logo')
     expect(logo).toBeTruthy()
     expect(logo.getAttribute('src')).toMatch(/^data:image\/png;base64,/)
-    expect(screen.getByText('发现并管理 DeepSeek Harness 插件')).toBeTruthy()
+    expect(screen.getByText('发现最好的营销插件')).toBeTruthy()
     expect(screen.getByText('12 个插件')).toBeTruthy()
     expect(document.querySelectorAll('[data-plugin-id]')).toHaveLength(10)
     expect(screen.queryByText('UI 插件')).toBeNull()
@@ -99,6 +100,18 @@ describe('PluginCenterTab', () => {
     fireEvent.click(screen.getByRole('button', { name: '第 2 页' }))
     expect(screen.getByText('Plugin 11')).toBeTruthy()
     expect(screen.queryByText('Plugin 1')).toBeNull()
+  })
+
+  it('filters plugins by a clickable marketing category', async () => {
+    renderTab()
+    await waitFor(() => expect(screen.getByText('Plugin 1')).toBeTruthy())
+
+    expect(screen.getByRole('button', { name: '内容营销 1' })).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: '内容营销 1' }))
+
+    expect(screen.getByText('Plugin 11')).toBeTruthy()
+    expect(screen.queryByText('Plugin 1')).toBeNull()
+    expect(screen.getByText('1 个插件')).toBeTruthy()
   })
 
   it('does not expose installed plugin category or slot metadata', async () => {

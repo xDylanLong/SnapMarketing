@@ -7,6 +7,10 @@ const isoDate = z.string().datetime({ offset: true })
 export const PluginCategorySchema = z.enum(['ui', 'capability'])
 export type PluginCategory = z.infer<typeof PluginCategorySchema>
 
+/** Marketing workflow categories supplied by the catalog service. */
+export const MarketingCategorySchema = z.string().trim().min(1)
+export type MarketingCategory = z.infer<typeof MarketingCategorySchema>
+
 /** Package installation source delegated to Harness. */
 export const InstallSchema = z.object({
   type: z.literal('package'),
@@ -52,6 +56,7 @@ export const PluginMetadataSchema = z.object({
   hasUI: z.boolean(),
   category: PluginCategorySchema,
   tags: z.array(z.string().min(1)).optional(),
+  marketingCategories: z.array(MarketingCategorySchema).min(1).optional(),
   seoTagsZh: z.array(z.string().min(1)).min(1).optional(),
   seoTagsEn: z.array(z.string().min(1)).min(1).optional(),
   icon: url.optional(),
@@ -105,6 +110,7 @@ export function filterPlugins(
     readonly category?: 'all' | PluginCategory | 'installed'
     readonly query?: string
     readonly tag?: string
+    readonly marketingCategory?: string
   },
   installedIds: ReadonlySet<string> = new Set(),
 ): readonly PluginMetadata[] {
@@ -114,8 +120,17 @@ export function filterPlugins(
     if (filter.category === 'capability' && plugin.hasUI) return false
     if (filter.category === 'installed' && !installedIds.has(plugin.id)) return false
     if (filter.tag !== undefined && !plugin.tags?.includes(filter.tag)) return false
+    if (filter.marketingCategory !== undefined && !plugin.marketingCategories?.includes(filter.marketingCategory)) return false
     if (query === undefined || query === '') return true
-    return [plugin.name, plugin.description, plugin.longDescription, ...(plugin.tags ?? [])]
+    return [
+      plugin.name,
+      plugin.description,
+      plugin.longDescription,
+      ...(plugin.tags ?? []),
+      ...(plugin.marketingCategories ?? []),
+      ...(plugin.seoTagsZh ?? []),
+      ...(plugin.seoTagsEn ?? []),
+    ]
       .filter((value): value is string => value !== undefined)
       .some(value => value.toLocaleLowerCase().includes(query))
   })
