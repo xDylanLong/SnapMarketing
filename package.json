@@ -19,8 +19,11 @@
     "build": "pnpm -r build",
     "lint": "tsc -p tsconfig.json --noEmit",
     "check:package": "node scripts/check-package.mjs",
-    "registry:collect": "node scripts/collect-topic-manifest.mjs && node scripts/build-marketing-manifest.mjs",
-    "registry:marketing": "node scripts/build-marketing-manifest.mjs"
+    "registry:collect:source": "node scripts/collect-topic-manifest.mjs",
+    "registry:classify": "node scripts/classify-marketing-plugins.mjs",
+    "registry:marketing": "node scripts/build-marketing-manifest.mjs",
+    "registry:validate": "node scripts/validate-catalog-update.mjs",
+    "registry:collect": "pnpm registry:collect:source && pnpm registry:classify && pnpm registry:marketing && pnpm registry:validate"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "6.9.1",

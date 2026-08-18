@@ -4,6 +4,7 @@ import {
   candidateToPlugin,
   collectRepositories,
   parseArguments,
+  preserveUpdatedAtWhenUnchanged,
   repositoryToCandidate,
 } from './collect-topic-manifest.mjs'
 
@@ -35,6 +36,29 @@ describe('full topic Manifest collection', () => {
     })
   })
 
+  it('preserves author-declared marketing classification metadata', () => {
+    const declared = {
+      ...repository,
+      packageJson: { text: JSON.stringify({
+        name: 'dsh-prompt-stash',
+        dsh: {
+          bundle: { patch: './cordis.patch.yml' },
+          pluginCenter: {
+            marketingCategories: ['内容营销'],
+            seoTagsZh: ['内容营销工具'],
+            seoTagsEn: ['content marketing tool'],
+          },
+        },
+      }) },
+    }
+    const candidate = repositoryToCandidate(declared)
+    expect(candidateToPlugin(candidate, { version: '0.2.2' })).toMatchObject({
+      marketingCategories: ['内容营销'],
+      seoTagsZh: ['内容营销工具'],
+      seoTagsEn: ['content marketing tool'],
+    })
+  })
+
   it('only skips repositories that cannot produce an installable DSH package', () => {
     expect(repositoryToCandidate({ ...repository, packageJson: undefined })).toEqual({
       accepted: false,
@@ -61,6 +85,16 @@ describe('full topic Manifest collection', () => {
     expect(parseArguments(['--dry-run', '--output=tmp/plugins.json']))
       .toEqual({ output: 'tmp/plugins.json', dryRun: true })
     expect(() => parseArguments(['--limit=50'])).toThrow(/unknown argument/)
+  })
+
+  it('does not create a catalog change when only the collection time changed', () => {
+    const existing = { schemaVersion: '1.0', updatedAt: '2026-08-17T00:00:00Z', plugins: [{ id: 'same' }] }
+    const next = { ...existing, updatedAt: '2026-08-18T00:00:00Z' }
+    expect(preserveUpdatedAtWhenUnchanged(next, existing).updatedAt).toBe(existing.updatedAt)
+    expect(preserveUpdatedAtWhenUnchanged(
+      { ...next, plugins: [{ id: 'changed' }] },
+      existing,
+    ).updatedAt).toBe(next.updatedAt)
   })
 
   it('splits searches that exceed GitHub Search\'s 1000-result window', async () => {

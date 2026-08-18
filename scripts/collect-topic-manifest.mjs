@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -83,6 +83,12 @@ export function candidateToPlugin(candidate, npmPackage) {
   const longDescription = firstString(metadata.longDescription)
   if (longDescription) plugin.longDescription = longDescription
   if (tags.length > 0) plugin.tags = tags
+  const marketingCategories = stringArray(metadata.marketingCategories)
+  if (marketingCategories?.length) plugin.marketingCategories = marketingCategories
+  const seoTagsZh = stringArray(metadata.seoTagsZh)
+  if (seoTagsZh?.length) plugin.seoTagsZh = seoTagsZh
+  const seoTagsEn = stringArray(metadata.seoTagsEn)
+  if (seoTagsEn?.length) plugin.seoTagsEn = seoTagsEn
   if (isHttpsUrl(metadata.icon)) plugin.icon = metadata.icon
   const screenshots = stringArray(metadata.screenshots)?.filter(isHttpsUrl)
   if (screenshots?.length) plugin.screenshots = screenshots
@@ -254,14 +260,31 @@ export async function buildManifest({
   }
 }
 
+export function preserveUpdatedAtWhenUnchanged(nextManifest, existingManifest) {
+  if (existingManifest?.schemaVersion === nextManifest.schemaVersion
+    && isNonEmptyString(existingManifest.updatedAt)
+    && Array.isArray(existingManifest.plugins)
+    && JSON.stringify(existingManifest.plugins) === JSON.stringify(nextManifest.plugins)) {
+    return { ...nextManifest, updatedAt: existingManifest.updatedAt }
+  }
+  return nextManifest
+}
+
 async function main() {
   const options = parseArguments(process.argv.slice(2))
-  const { manifest, summary } = await buildManifest({
+  const { manifest: collectedManifest, summary } = await buildManifest({
     token: process.env.GITHUB_TOKEN,
     onProgress: message => console.log(message),
   })
+  let manifest = collectedManifest
   if (!options.dryRun) {
     const output = resolve(options.output)
+    try {
+      const existing = JSON.parse(await readFile(output, 'utf8'))
+      manifest = preserveUpdatedAtWhenUnchanged(manifest, existing)
+    } catch (error) {
+      if (error?.code !== 'ENOENT') throw error
+    }
     await mkdir(dirname(output), { recursive: true })
     await writeFile(output, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8')
     console.log(`wrote ${manifest.plugins.length} plugins to ${options.output}`)
