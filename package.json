@@ -26,7 +26,7 @@
     "registry:collect": "pnpm registry:collect:source && pnpm registry:classify && pnpm registry:marketing && pnpm registry:validate"
   },
   "devDependencies": {
-    "@testing-library/jest-dom": "6.9.1",
+    "@testing-library/jest-dom": "7.0.1",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/react": "^16.1.0",
     "@types/node": "^22.13.4",
