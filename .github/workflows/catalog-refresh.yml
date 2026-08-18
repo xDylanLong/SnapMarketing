@@ -1,0 +1,103 @@
+name: Refresh plugin catalog
+
+on:
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: catalog-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout default branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.4.1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Refresh and classify catalog
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+          LLM_BASE_URL: ${{ secrets.LLM_BASE_URL }}
+          LLM_MODEL: ${{ secrets.LLM_MODEL }}
+        run: pnpm registry:collect
+
+      - name: Verify repository
+        run: |
+          pnpm test
+          pnpm typecheck
+          pnpm build
+          pnpm check:package
+          git diff --check
+
+      - name: Create or update catalog pull request
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          paths=(
+            packages/plugin-center/registry/plugins.full.json
+            packages/plugin-center/registry/plugins.json
+            packages/plugin-center/registry/classification-cache.json
+          )
+          if git diff --quiet -- "${paths[@]}"; then
+            echo "Catalog is already current."
+            exit 0
+          fi
+
+          mkdir -p tmp
+          {
+            echo "## 每日插件目录更新"
+            echo
+            echo "本 PR 由 GitHub Actions 自动采集插件数据、执行营销分类并生成中英文 SEO 标签。"
+            echo
+            echo '```text'
+            git diff --stat -- "${paths[@]}"
+            echo '```'
+            echo
+            echo "已通过：测试、类型检查、构建、包内容检查和目录一致性校验。"
+          } > tmp/catalog-pr-body.md
+
+          branch=automation/catalog-refresh
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git switch -C "$branch"
+          git add -- "${paths[@]}"
+          git commit -m "chore: refresh plugin catalog"
+
+          remote_sha=$(git ls-remote --heads origin "$branch" | cut -f1)
+          if [ -n "$remote_sha" ]; then
+            git push --force-with-lease="refs/heads/$branch:$remote_sha" origin "HEAD:$branch"
+          else
+            git push origin "HEAD:$branch"
+          fi
+
+          pr_number=$(gh pr list --base main --head "$branch" --state open --json number --jq '.[0].number')
+          if [ -n "$pr_number" ]; then
+            gh pr edit "$pr_number" --title "chore: 每日更新插件目录" --body-file tmp/catalog-pr-body.md
+          else
+            gh pr create --base main --head "$branch" --title "chore: 每日更新插件目录" --body-file tmp/catalog-pr-body.md
+          fi

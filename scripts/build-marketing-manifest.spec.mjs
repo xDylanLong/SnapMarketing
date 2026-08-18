@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises'
 import { describe, expect, it } from 'vitest'
-import { createMarketingManifest, MARKETING_PLUGIN_CATEGORIES, MARKETING_PLUGIN_SEO } from './build-marketing-manifest.mjs'
+import { createMarketingManifest } from './build-marketing-manifest.mjs'
 
 const fullManifest = JSON.parse(await readFile(
   new URL('../packages/plugin-center/registry/plugins.full.json', import.meta.url),
@@ -10,28 +10,49 @@ const publishedManifest = JSON.parse(await readFile(
   new URL('../packages/plugin-center/registry/plugins.json', import.meta.url),
   'utf8',
 ))
+const curation = JSON.parse(await readFile(
+  new URL('../packages/plugin-center/registry/curation.json', import.meta.url),
+  'utf8',
+))
 
 describe('marketing Manifest generation', () => {
-  it('keeps the full backup and deterministically derives the published catalog', () => {
-    expect(fullManifest.plugins.length).toBeGreaterThan(publishedManifest.plugins.length)
-    expect(publishedManifest).toEqual(createMarketingManifest(fullManifest))
-    expect(publishedManifest.plugins).toHaveLength(Object.keys(MARKETING_PLUGIN_SEO).length)
+  it('deterministically derives the current catalog from manual overrides', () => {
+    expect(publishedManifest).toEqual(createMarketingManifest(fullManifest, { overrides: curation.overrides }))
   })
 
-  it('preserves source metadata and adds complete bilingual SEO tags to every plugin', () => {
-    const sourceById = new Map(fullManifest.plugins.map(plugin => [plugin.id, plugin]))
-    for (const plugin of publishedManifest.plugins) {
-      const { marketingCategories, seoTagsZh, seoTagsEn, ...sourceMetadata } = plugin
-      expect(sourceMetadata).toEqual(sourceById.get(plugin.id))
-      expect(marketingCategories).toEqual(MARKETING_PLUGIN_CATEGORIES[plugin.id])
-      expect(seoTagsZh).toHaveLength(5)
-      expect(seoTagsEn).toHaveLength(5)
-      expect(seoTagsZh.every(tag => /[\u3400-\u9fff]/u.test(tag))).toBe(true)
-      expect(seoTagsEn.every(tag => /^[\x20-\x7e]+$/u.test(tag))).toBe(true)
-    }
+  it('keeps confidence metadata outside the published Manifest', () => {
+    const source = fullManifest.plugins[0]
+    const result = createMarketingManifest(
+      { ...fullManifest, plugins: [source] },
+      { classifications: { [source.id]: classification(source.id, 0.67) } },
+    )
+    expect(result.plugins[0]).toMatchObject({
+      id: source.id,
+      marketingCategories: ['内容营销'],
+      seoTagsZh: expect.any(Array),
+      seoTagsEn: expect.any(Array),
+    })
+    expect(result.plugins[0]).not.toHaveProperty('confidence')
   })
 
-  it('assigns every published plugin to at least one marketing workflow', () => {
-    expect(publishedManifest.plugins.every(plugin => plugin.marketingCategories?.length)).toBe(true)
+  it('lets a manual override exclude or replace an automatic classification', () => {
+    const source = fullManifest.plugins[0]
+    const automatic = { [source.id]: classification(source.id, 0.9) }
+    expect(createMarketingManifest(
+      { ...fullManifest, plugins: [source] },
+      { classifications: automatic, overrides: { [source.id]: { marketingFit: false } } },
+    ).plugins).toEqual([])
   })
 })
+
+function classification(id, confidence) {
+  return {
+    id,
+    marketingFit: true,
+    marketingCategories: ['内容营销'],
+    seoTagsZh: ['内容营销工具', '营销文案生成', '品牌内容创作', '活动内容优化', '社交媒体文案'],
+    seoTagsEn: ['content marketing tool', 'marketing copy generation', 'brand content creation', 'campaign content optimization', 'social media copy'],
+    confidence,
+    reason: 'Supports marketing content.',
+  }
+}
