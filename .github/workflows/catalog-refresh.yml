@@ -4,6 +4,15 @@ on:
   schedule:
     - cron: '17 3 * * *'
   workflow_dispatch:
+    inputs:
+      mode:
+        description: Collection mode
+        required: true
+        default: incremental
+        type: choice
+        options:
+          - incremental
+          - full
 
 permissions:
   contents: write
@@ -16,12 +25,58 @@ concurrency:
 jobs:
   refresh:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 120
     steps:
       - name: Checkout default branch
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Restore previous published catalog state
+        shell: bash
+        run: |
+          set +e
+          git ls-remote --exit-code --heads origin catalog >/dev/null
+          catalog_status=$?
+          set -e
+          if [ "$catalog_status" = "2" ]; then
+            echo "No published catalog branch yet; starting with the bundled seed."
+            exit 0
+          fi
+          if [ "$catalog_status" != "0" ]; then
+            echo "Failed to determine the published catalog branch."
+            exit "$catalog_status"
+          fi
+          git fetch --no-tags origin "+refs/heads/catalog:refs/remotes/origin/catalog"
+
+          paths=(
+            packages/plugin-center/registry/plugins.full.json
+            packages/plugin-center/registry/plugins.json
+            packages/plugin-center/registry/classification-cache.json
+            packages/plugin-center/registry/collection-cache.json
+          )
+          for path in "${paths[@]}"; do
+            if git cat-file -e "origin/catalog:$path" 2>/dev/null; then
+              git show "origin/catalog:$path" > "$path"
+            else
+              echo "No published $path yet; keeping the repository seed."
+            fi
+          done
+          echo "Restored the previous validated catalog and collection state."
+
+      - name: Select collection mode
+        shell: bash
+        run: |
+          requested="${{ github.event.inputs.mode }}"
+          if [ -n "$requested" ]; then
+            mode="$requested"
+          elif [ "$(date -u +%u)" = "7" ]; then
+            mode=full
+          else
+            mode=incremental
+          fi
+          echo "CATALOG_COLLECTION_MODE=$mode" >> "$GITHUB_ENV"
+          echo "Using $mode catalog collection."
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
@@ -53,7 +108,7 @@ jobs:
           pnpm check:package
           git diff --check
 
-      - name: Create or update catalog pull request
+      - name: Publish catalog and create or update pull request
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
@@ -62,31 +117,53 @@ jobs:
             packages/plugin-center/registry/plugins.full.json
             packages/plugin-center/registry/plugins.json
             packages/plugin-center/registry/classification-cache.json
+            packages/plugin-center/registry/collection-cache.json
           )
-          if git diff --quiet -- "${paths[@]}"; then
-            echo "Catalog is already current."
+          branch=automation/catalog-refresh
+          publish_branch=catalog
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+
+          if git show-ref --verify --quiet refs/remotes/origin/catalog \
+            && git diff --quiet origin/catalog -- "${paths[@]}"; then
+            echo "Published catalog is already current."
             exit 0
           fi
 
-          mkdir -p tmp
-          {
-            echo "## 每日插件目录更新"
-            echo
-            echo "本 PR 由 GitHub Actions 自动采集插件数据、执行营销分类并生成中英文 SEO 标签。"
-            echo
-            echo '```text'
-            git diff --stat -- "${paths[@]}"
-            echo '```'
-            echo
-            echo "已通过：测试、类型检查、构建、包内容检查和目录一致性校验。"
-          } > tmp/catalog-pr-body.md
+          has_changes=false
+          if ! git diff --quiet -- "${paths[@]}"; then
+            has_changes=true
+            mkdir -p tmp
+            {
+              echo "## 每日插件目录更新"
+              echo
+              echo "本 PR 由 GitHub Actions 以 $CATALOG_COLLECTION_MODE 模式采集插件数据、执行营销分类并生成中英文 SEO 标签。"
+              echo
+              echo '```text'
+              git diff --stat -- "${paths[@]}"
+              echo '```'
+              echo
+              echo "已通过：测试、类型检查、构建、包内容检查和目录一致性校验。"
+            } > tmp/catalog-pr-body.md
 
-          branch=automation/catalog-refresh
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git switch -C "$branch"
-          git add -- "${paths[@]}"
-          git commit -m "chore: refresh plugin catalog"
+            git switch -C "$branch"
+            git add -- "${paths[@]}"
+            git commit -m "chore: refresh plugin catalog"
+          fi
+
+          catalog_commit=$(git rev-parse HEAD)
+          publish_remote_sha=$(git ls-remote --heads origin "$publish_branch" | cut -f1)
+          if [ -n "$publish_remote_sha" ]; then
+            git push --force-with-lease="refs/heads/$publish_branch:$publish_remote_sha" origin "$catalog_commit:refs/heads/$publish_branch"
+          else
+            git push origin "$catalog_commit:refs/heads/$publish_branch"
+          fi
+          echo "Published validated catalog from $catalog_commit."
+
+          if [ "$has_changes" = false ]; then
+            echo "Catalog is already current."
+            exit 0
+          fi
 
           remote_sha=$(git ls-remote --heads origin "$branch" | cut -f1)
           if [ -n "$remote_sha" ]; then
@@ -95,9 +172,16 @@ jobs:
             git push origin "HEAD:$branch"
           fi
 
-          pr_number=$(gh pr list --base main --head "$branch" --state open --json number --jq '.[0].number')
+          if ! pr_number=$(gh pr list --base main --head "$branch" --state open --json number --jq '.[0].number'); then
+            echo "::warning::Catalog was published, but the audit pull request could not be queried."
+            exit 0
+          fi
           if [ -n "$pr_number" ]; then
-            gh pr edit "$pr_number" --title "chore: 每日更新插件目录" --body-file tmp/catalog-pr-body.md
+            if ! gh pr edit "$pr_number" --title "chore: 每日更新插件目录" --body-file tmp/catalog-pr-body.md; then
+              echo "::warning::Catalog was published, but audit pull request #$pr_number could not be updated."
+            fi
           else
-            gh pr create --base main --head "$branch" --title "chore: 每日更新插件目录" --body-file tmp/catalog-pr-body.md
+            if ! gh pr create --base main --head "$branch" --title "chore: 每日更新插件目录" --body-file tmp/catalog-pr-body.md; then
+              echo "::warning::Catalog was published, but the audit pull request could not be created."
+            fi
           fi

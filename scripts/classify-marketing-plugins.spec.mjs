@@ -102,4 +102,39 @@ describe('marketing plugin classification', () => {
     })
     expect(overridden.summary).toMatchObject({ classified: 0, manuallyOverridden: 1 })
   })
+
+  it('classifies independent batches with bounded concurrency', async () => {
+    const plugins = Array.from({ length: 4 }, (_, index) => ({
+      ...plugin,
+      id: `${plugin.id}-${index}`,
+      install: { ...plugin.install, source: `${plugin.install.source}-${index}` },
+    }))
+    let active = 0
+    let peak = 0
+    const fetchImpl = vi.fn(async (_url, init) => {
+      active += 1
+      peak = Math.max(peak, active)
+      await new Promise(resolve => setTimeout(resolve, 5))
+      active -= 1
+      const request = JSON.parse(init.body)
+      const requestedPlugin = JSON.parse(request.messages[1].content).plugins[0]
+      return new Response(JSON.stringify({
+        choices: [{ message: { content: JSON.stringify({
+          classifications: [{ ...result, id: requestedPlugin.id }],
+        }) } }],
+      }), { status: 200 })
+    })
+
+    const classified = await classifyManifest({
+      manifest: { schemaVersion: '1.0', plugins },
+      cache: { schemaVersion: '1.0', classifierVersion: CLASSIFIER_VERSION, entries: {} },
+      overrides: {}, apiKey: 'test-key', baseUrl: 'https://llm.example/v1', model: 'test-model', fetchImpl,
+      batchSize: 1,
+      batchConcurrency: 3,
+    })
+
+    expect(classified.summary.llmClassified).toBe(4)
+    expect(fetchImpl).toHaveBeenCalledTimes(4)
+    expect(peak).toBe(3)
+  })
 })

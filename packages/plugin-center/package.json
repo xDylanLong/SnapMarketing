@@ -1,6 +1,6 @@
 {
   "name": "@snapmarketing/dsh-plugin-center",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "dsh-snapmarketing plugin center for discovering, installing, and managing allowlisted DeepSeek Harness plugins",
   "type": "module",
   "license": "Apache-2.0",

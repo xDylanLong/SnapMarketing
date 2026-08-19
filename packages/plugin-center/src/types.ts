@@ -24,6 +24,7 @@ export interface PluginCenterConfig {
   readonly commandTimeoutMs?: number
   readonly cwd?: string
   readonly installer?: HarnessPluginInstaller
+  readonly catalogLoader?: () => Promise<PluginManifest>
 }
 
 /** Version of the installed dsh-snapmarketing package. */

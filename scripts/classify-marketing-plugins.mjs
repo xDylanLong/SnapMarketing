@@ -7,6 +7,7 @@ const DEFAULT_SOURCE = 'packages/plugin-center/registry/plugins.full.json'
 const DEFAULT_CACHE = 'packages/plugin-center/registry/classification-cache.json'
 const DEFAULT_CURATION = 'packages/plugin-center/registry/curation.json'
 const DEFAULT_BATCH_SIZE = 20
+const DEFAULT_BATCH_CONCURRENCY = 3
 const REQUEST_TIMEOUT_MS = 60_000
 
 export const CLASSIFIER_VERSION = 'marketing-v1'
@@ -48,10 +49,14 @@ export async function classifyManifest({
   fetchImpl = fetch,
   now = new Date(),
   batchSize = DEFAULT_BATCH_SIZE,
+  batchConcurrency = DEFAULT_BATCH_CONCURRENCY,
 }) {
   validateManifestRoot(manifest)
   validateConfig({ apiKey, baseUrl, model })
   if (!Number.isInteger(batchSize) || batchSize < 1) throw new Error('batchSize must be a positive integer')
+  if (!Number.isInteger(batchConcurrency) || batchConcurrency < 1) {
+    throw new Error('batchConcurrency must be a positive integer')
+  }
 
   const knownIds = new Set(manifest.plugins.map(plugin => plugin.id))
   const entries = Object.fromEntries(
@@ -82,23 +87,32 @@ export async function classifyManifest({
     authorDeclared += 1
   }
 
-  for (let index = 0; index < pending.length; index += batchSize) {
-    const plugins = pending.slice(index, index + batchSize)
-    const classifications = await classifyBatch(plugins, { apiKey, baseUrl, model, fetchImpl })
-    for (const classification of classifications) {
-      const plugin = plugins.find(item => item.id === classification.id)
-      entries[classification.id] = {
-        sourceHash: classificationSourceHash(plugin),
-        marketingFit: classification.marketingFit,
-        marketingCategories: classification.marketingCategories,
-        seoTagsZh: classification.seoTagsZh,
-        seoTagsEn: classification.seoTagsEn,
-        confidence: classification.confidence,
-        reason: classification.reason,
-        source: 'llm',
-        classifiedAt: now.toISOString(),
+  const groupSize = batchSize * batchConcurrency
+  for (let index = 0; index < pending.length; index += groupSize) {
+    const batches = Array.from({ length: batchConcurrency }, (_, batchIndex) => (
+      pending.slice(index + batchIndex * batchSize, index + (batchIndex + 1) * batchSize)
+    )).filter(plugins => plugins.length > 0)
+    const results = await Promise.all(batches.map(async plugins => ({
+      plugins,
+      classifications: await classifyBatch(plugins, { apiKey, baseUrl, model, fetchImpl }),
+    })))
+    for (const { plugins, classifications } of results) {
+      for (const classification of classifications) {
+        const plugin = plugins.find(item => item.id === classification.id)
+        entries[classification.id] = {
+          sourceHash: classificationSourceHash(plugin),
+          marketingFit: classification.marketingFit,
+          marketingCategories: classification.marketingCategories,
+          seoTagsZh: classification.seoTagsZh,
+          seoTagsEn: classification.seoTagsEn,
+          confidence: classification.confidence,
+          reason: classification.reason,
+          source: 'llm',
+          classifiedAt: now.toISOString(),
+        }
       }
     }
+    console.log(`classified ${Math.min(index + groupSize, pending.length)}/${pending.length} plugins`)
   }
 
   return {
