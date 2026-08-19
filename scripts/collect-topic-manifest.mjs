@@ -3,43 +3,72 @@ import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const GRAPHQL_URL = 'https://api.github.com/graphql'
-const NPM_REGISTRY_URL = 'https://registry.npmjs.org'
 const DEFAULT_OUTPUT = 'packages/plugin-center/registry/plugins.full.json'
-const FIRST_GITHUB_TIMESTAMP = '2008-01-01T00:00:00Z'
-const GITHUB_SEARCH_LIMIT = 1000
-const PAGE_SIZE = 50
-const NPM_CONCURRENCY = 4
-const NPM_PACKAGE_NAME = /^(?:@[a-z0-9][a-z0-9._-]*\/)?[a-z0-9][a-z0-9._-]*$/i
+const DEFAULT_STATE = 'packages/plugin-center/registry/collection-cache.json'
+const PAGE_SIZE = 100
+const HYDRATE_BATCH_SIZE = 50
+const HYDRATE_CONCURRENCY = 3
+const OVERLAP_MILLISECONDS = 48 * 60 * 60 * 1000
+const PACKAGE_NAME_PATTERN = /^(?:@[a-z0-9][a-z0-9._-]*\/)?[a-z0-9][a-z0-9._-]*$/i
 
-const QUERY = `
-  query TopicRepositories($query: String!, $first: Int!, $after: String) {
-    search(query: $query, type: REPOSITORY, first: $first, after: $after) {
-      repositoryCount
-      pageInfo { hasNextPage endCursor }
-      nodes {
-        ... on Repository {
-          name
-          nameWithOwner
-          url
-          description
-          stargazerCount
-          owner { login url }
-          repositoryTopics(first: 30) { nodes { topic { name } } }
-          packageJson: object(expression: "HEAD:package.json") { ... on Blob { text } }
-        }
+const INDEX_QUERY = `
+  query TopicRepositoryIndex($first: Int!, $after: String) {
+    topic(name: "dsh-plugin") {
+      repositories(first: $first, after: $after, orderBy: { field: UPDATED_AT, direction: DESC }) {
+        totalCount
+        pageInfo { hasNextPage endCursor }
+        nodes { id nameWithOwner updatedAt pushedAt }
       }
     }
+    rateLimit { cost remaining resetAt }
+  }
+`
+
+const HYDRATE_QUERY = `
+  query HydrateTopicRepositories($ids: [ID!]!) {
+    nodes(ids: $ids) {
+      ... on Repository {
+        id
+        name
+        nameWithOwner
+        url
+        description
+        stargazerCount
+        updatedAt
+        pushedAt
+        owner { login url }
+        repositoryTopics(first: 30) { nodes { topic { name } } }
+        packageJson: object(expression: "HEAD:package.json") { ... on Blob { oid text } }
+      }
+    }
+    rateLimit { cost remaining resetAt }
   }
 `
 
 export function parseArguments(args) {
-  const options = { output: DEFAULT_OUTPUT, dryRun: false }
+  const options = { output: DEFAULT_OUTPUT, state: DEFAULT_STATE, mode: 'incremental', dryRun: false }
   for (const argument of args) {
     if (argument === '--dry-run') options.dryRun = true
     else if (argument.startsWith('--output=')) options.output = argument.slice('--output='.length)
+    else if (argument.startsWith('--state=')) options.state = argument.slice('--state='.length)
+    else if (argument.startsWith('--mode=')) options.mode = parseMode(argument.slice('--mode='.length))
     else throw new Error(`unknown argument: ${argument}`)
   }
   return options
+}
+
+export function createEmptyCollectionState() {
+  return { schemaVersion: 1, watermark: null, lastFullReconcileAt: null, repositories: {} }
+}
+
+export function normalizeCollectionState(value) {
+  if (value?.schemaVersion !== 1 || !isPlainObject(value.repositories)) return createEmptyCollectionState()
+  return {
+    schemaVersion: 1,
+    watermark: isTimestamp(value.watermark) ? value.watermark : null,
+    lastFullReconcileAt: isTimestamp(value.lastFullReconcileAt) ? value.lastFullReconcileAt : null,
+    repositories: value.repositories,
+  }
 }
 
 export function repositoryToCandidate(repository) {
@@ -51,10 +80,8 @@ export function repositoryToCandidate(repository) {
     return { accepted: false, reason: 'invalid-package-json' }
   }
   if (!isNonEmptyString(packageJson.name)) return { accepted: false, reason: 'missing-package-name' }
-  if (!NPM_PACKAGE_NAME.test(packageJson.name)) return { accepted: false, reason: 'invalid-package-name' }
-  if (!isNonEmptyString(packageJson.dsh?.bundle?.patch)) {
-    return { accepted: false, reason: 'missing-dsh-bundle' }
-  }
+  if (!PACKAGE_NAME_PATTERN.test(packageJson.name)) return { accepted: false, reason: 'invalid-package-name' }
+  if (!isNonEmptyString(packageJson.dsh?.bundle?.patch)) return { accepted: false, reason: 'missing-dsh-bundle' }
 
   const metadata = isPlainObject(packageJson.dsh.pluginCenter) ? packageJson.dsh.pluginCenter : {}
   const hasUI = typeof metadata.hasUI === 'boolean' ? metadata.hasUI : packageJson.dsh.client !== undefined
@@ -63,7 +90,7 @@ export function repositoryToCandidate(repository) {
   return { accepted: true, repository, packageJson, metadata, hasUI, description }
 }
 
-export function candidateToPlugin(candidate, npmPackage) {
+export function candidateToPlugin(candidate) {
   const { repository, packageJson, metadata, hasUI, description } = candidate
   const topics = repository.repositoryTopics.nodes.map(node => node.topic.name)
   const tags = stringArray(metadata.tags) ?? topics
@@ -75,7 +102,7 @@ export function candidateToPlugin(candidate, npmPackage) {
     description,
     author: { name: repository.owner.login, url: repository.owner.url },
     repository: repository.url,
-    version: npmPackage.version,
+    version: firstString(packageJson.version) ?? 'unknown',
     install: { type: 'package', source: packageJson.name },
     hasUI,
     category: hasUI ? 'ui' : 'capability',
@@ -99,7 +126,7 @@ export function candidateToPlugin(candidate, npmPackage) {
   return plugin
 }
 
-async function fetchRepositoryPage(token, searchQuery, after, fetchImpl, sleepImpl) {
+async function fetchGraphql(token, query, variables, fetchImpl, sleepImpl, metrics) {
   let lastError
   for (let attempt = 1; attempt <= 3; attempt += 1) {
     try {
@@ -111,13 +138,16 @@ async function fetchRepositoryPage(token, searchQuery, after, fetchImpl, sleepIm
           'content-type': 'application/json',
           'user-agent': 'SnapMarketing-Manifest-Collector/0.1',
         },
-        body: JSON.stringify({ query: QUERY, variables: { query: searchQuery, first: PAGE_SIZE, after } }),
-        signal: AbortSignal.timeout(20_000),
+        body: JSON.stringify({ query, variables }),
+        signal: AbortSignal.timeout(30_000),
       })
       if (!response.ok) throw new Error(`GitHub GraphQL request failed with HTTP ${response.status}`)
       const payload = await response.json()
       if (payload.errors?.length) throw new Error(`GitHub GraphQL error: ${payload.errors[0].message}`)
-      return payload.data.search
+      metrics.requests += 1
+      metrics.cost += payload.data.rateLimit?.cost ?? 0
+      metrics.remaining = payload.data.rateLimit?.remaining ?? metrics.remaining
+      return payload.data
     } catch (error) {
       lastError = error
       if (attempt < 3) await sleepImpl(attempt * 500)
@@ -126,58 +156,40 @@ async function fetchRepositoryPage(token, searchQuery, after, fetchImpl, sleepIm
   throw lastError
 }
 
-async function collectTimeRange(token, startTime, endTime, fetchImpl, sleepImpl) {
-  const searchQuery = `topic:dsh-plugin fork:true created:${startTime}..${endTime}`
-  const firstPage = await fetchRepositoryPage(token, searchQuery, null, fetchImpl, sleepImpl)
-  if (firstPage.repositoryCount > GITHUB_SEARCH_LIMIT) {
-    if (startTime === endTime) {
-      throw new Error(`GitHub Search returned more than ${GITHUB_SEARCH_LIMIT} repositories created at ${startTime}`)
+export async function collectRepositories({ token, mode, cutoff, fetchImpl = fetch, sleepImpl = delay, metrics = createMetrics() }) {
+  const repositories = []
+  let after = null
+  let totalCount = 0
+  let pages = 0
+  while (true) {
+    const data = await fetchGraphql(token, INDEX_QUERY, { first: PAGE_SIZE, after }, fetchImpl, sleepImpl, metrics)
+    if (!data.topic) throw new Error('GitHub topic "dsh-plugin" was not found')
+    const connection = data.topic.repositories
+    const nodes = connection.nodes.filter(Boolean)
+    totalCount = connection.totalCount
+    pages += 1
+    if (mode === 'incremental') {
+      const current = nodes.filter(repository => !isTimestamp(repository.updatedAt)
+        || new Date(repository.updatedAt).getTime() >= new Date(cutoff).getTime())
+      repositories.push(...current)
+      if (current.length < nodes.length) break
+    } else {
+      repositories.push(...nodes)
     }
-    const midpoint = midpointTimestamp(startTime, endTime)
-    const left = await collectTimeRange(token, startTime, midpoint, fetchImpl, sleepImpl)
-    const right = await collectTimeRange(token, addSeconds(midpoint, 1), endTime, fetchImpl, sleepImpl)
-    return [...left, ...right]
+    if (!connection.pageInfo.hasNextPage) break
+    after = connection.pageInfo.endCursor
   }
-
-  const repositories = firstPage.nodes.filter(Boolean)
-  let pageInfo = firstPage.pageInfo
-  while (pageInfo.hasNextPage) {
-    const page = await fetchRepositoryPage(token, searchQuery, pageInfo.endCursor, fetchImpl, sleepImpl)
-    repositories.push(...page.nodes.filter(Boolean))
-    pageInfo = page.pageInfo
-  }
-  return repositories
+  return { repositories, totalCount, pages }
 }
 
-export async function collectRepositories(token, fetchImpl = fetch, today = new Date(), sleepImpl = delay) {
-  const repositories = await collectTimeRange(
-    token,
-    FIRST_GITHUB_TIMESTAMP,
-    timestamp(today),
-    fetchImpl,
-    sleepImpl,
-  )
-  return [...new Map(repositories.map(repository => [repository.nameWithOwner, repository])).values()]
-}
-
-async function fetchPublishedPackage(packageName, fetchImpl, sleepImpl) {
-  let lastError
-  for (let attempt = 1; attempt <= 5; attempt += 1) {
-    try {
-      const response = await fetchImpl(`${NPM_REGISTRY_URL}/${encodeURIComponent(packageName)}/latest`, {
-        headers: { accept: 'application/json', 'user-agent': 'SnapMarketing-Manifest-Collector/0.1' },
-        signal: AbortSignal.timeout(10_000),
-      })
-      if (response.status === 404) return undefined
-      if (!response.ok) throw new Error(`npm registry request failed with HTTP ${response.status}`)
-      const result = await response.json()
-      return result.name === packageName && isNonEmptyString(result.version) ? result : undefined
-    } catch (error) {
-      lastError = error
-      if (attempt < 5) await sleepImpl(attempt * 1000)
-    }
-  }
-  throw lastError
+async function hydrateRepositories(token, ids, fetchImpl, sleepImpl, metrics) {
+  const batches = []
+  for (let index = 0; index < ids.length; index += HYDRATE_BATCH_SIZE) batches.push(ids.slice(index, index + HYDRATE_BATCH_SIZE))
+  const results = await mapWithConcurrency(batches, HYDRATE_CONCURRENCY, async (batch) => {
+    const data = await fetchGraphql(token, HYDRATE_QUERY, { ids: batch }, fetchImpl, sleepImpl, metrics)
+    return data.nodes.filter(Boolean)
+  })
+  return results.flat()
 }
 
 async function mapWithConcurrency(items, concurrency, mapper) {
@@ -193,48 +205,65 @@ async function mapWithConcurrency(items, concurrency, mapper) {
   return results
 }
 
-export async function buildManifest({
-  token,
-  fetchImpl = fetch,
-  today = new Date(),
-  sleepImpl = delay,
-  onProgress,
-}) {
+export async function buildManifest({ token, mode = 'incremental', previousState = createEmptyCollectionState(), fetchImpl = fetch, today = new Date(), sleepImpl = delay, onProgress }) {
   if (!token) throw new Error('GITHUB_TOKEN is required to collect the dsh-plugin topic')
-  const repositories = await collectRepositories(token, fetchImpl, today, sleepImpl)
-  onProgress?.(`collected ${repositories.length} topic repositories`)
+  const requestedMode = parseMode(mode)
+  const state = normalizeCollectionState(previousState)
+  const cachedRecords = Object.values(state.repositories)
+  const hasIncrementalBase = state.watermark !== null
+    && cachedRecords.length > 0
+    && cachedRecords.every(isReusableRecord)
+  const effectiveMode = requestedMode === 'full' || !hasIncrementalBase ? 'full' : 'incremental'
+  const startedAt = timestamp(today)
+  const cutoff = effectiveMode === 'incremental'
+    ? timestamp(new Date(new Date(state.watermark).getTime() - OVERLAP_MILLISECONDS))
+    : null
+  const metrics = createMetrics()
+  const discovery = await collectRepositories({ token, mode: effectiveMode, cutoff, fetchImpl, sleepImpl, metrics })
+  onProgress?.(`discovery: mode=${effectiveMode}, pages=${discovery.pages}, repositories=${discovery.repositories.length}, topicTotal=${discovery.totalCount}`)
+
+  const nextRecords = effectiveMode === 'full' ? {} : { ...state.repositories }
+  const changed = discovery.repositories.filter((repository) => {
+    const previous = state.repositories[repository.id]
+    return !isReusableRecord(previous)
+      || previous.nameWithOwner !== repository.nameWithOwner
+      || previous.updatedAt !== repository.updatedAt
+      || previous.pushedAt !== repository.pushedAt
+  })
+  const changedIds = new Set(changed.map(repository => repository.id))
+  onProgress?.(`hydration: changed=${changed.length}, reused=${discovery.repositories.length - changed.length}`)
+  if (effectiveMode === 'full') {
+    for (const repository of discovery.repositories) {
+      const previous = state.repositories[repository.id]
+      if (isReusableRecord(previous) && !changedIds.has(repository.id)) nextRecords[repository.id] = previous
+    }
+  }
+
+  const hydrated = await hydrateRepositories(token, changed.map(repository => repository.id), fetchImpl, sleepImpl, metrics)
+  const hydratedById = new Map(hydrated.map(repository => [repository.id, repository]))
+  for (const lightRepository of changed) {
+    const repository = hydratedById.get(lightRepository.id)
+    if (!repository) {
+      delete nextRecords[lightRepository.id]
+      continue
+    }
+    const result = repositoryToCandidate(repository)
+    const base = {
+      nameWithOwner: repository.nameWithOwner,
+      updatedAt: repository.updatedAt,
+      pushedAt: repository.pushedAt,
+      packageJsonOid: repository.packageJson?.oid ?? null,
+    }
+    nextRecords[repository.id] = result.accepted
+      ? { ...base, status: 'accepted', stars: repository.stargazerCount, plugin: candidateToPlugin(result) }
+      : { ...base, status: 'skipped', reason: result.reason }
+  }
 
   const skipped = new Map()
-  const candidates = []
-  for (const repository of repositories) {
-    const result = repositoryToCandidate(repository)
-    if (result.accepted) candidates.push(result)
-    else skipped.set(result.reason, (skipped.get(result.reason) ?? 0) + 1)
-  }
-  onProgress?.(`checking ${candidates.length} installable candidates on npm`)
-
-  const checked = await mapWithConcurrency(candidates, NPM_CONCURRENCY, async (candidate) => {
-    try {
-      const npmPackage = await fetchPublishedPackage(candidate.packageJson.name, fetchImpl, sleepImpl)
-      if (!npmPackage) return { accepted: false, reason: 'not-published-to-npm' }
-      return { accepted: true, plugin: candidateToPlugin(candidate, npmPackage), stars: candidate.repository.stargazerCount }
-    } catch (error) {
-      return { accepted: false, reason: 'npm-check-failed', packageName: candidate.packageJson.name, error }
-    }
-  })
-  const failedChecks = checked.filter(result => result.reason === 'npm-check-failed')
-  if (failedChecks.length > 0) {
-    throw new AggregateError(
-      failedChecks.map(result => result.error),
-      `${failedChecks.length} npm package checks failed after retries: ${failedChecks
-        .map(result => `${result.packageName} (${errorMessage(result.error)})`)
-        .join(', ')}; catalog was not written`,
-    )
-  }
-
-  const accepted = checked.filter(result => result.accepted)
-  for (const result of checked.filter(result => !result.accepted)) {
-    skipped.set(result.reason, (skipped.get(result.reason) ?? 0) + 1)
+  const accepted = []
+  for (const record of Object.values(nextRecords)) {
+    if (record.status === 'accepted') accepted.push({ plugin: record.plugin, stars: record.stars })
+    else if (record.status === 'skipped') skipped.set(record.reason, (skipped.get(record.reason) ?? 0) + 1)
   }
   const seen = new Set()
   const plugins = accepted
@@ -249,12 +278,26 @@ export async function buildManifest({
       return true
     })
 
+  const collectionState = {
+    schemaVersion: 1,
+    watermark: startedAt,
+    lastFullReconcileAt: effectiveMode === 'full' ? startedAt : state.lastFullReconcileAt,
+    repositories: Object.fromEntries(Object.entries(nextRecords).sort(([left], [right]) => left.localeCompare(right))),
+  }
   return {
     manifest: { schemaVersion: '1.0', updatedAt: new Date().toISOString(), plugins },
+    collectionState,
     summary: {
-      topicRepositories: repositories.length,
-      installableCandidates: candidates.length,
-      publishedPlugins: plugins.length,
+      requestedMode,
+      effectiveMode,
+      topicRepositories: discovery.totalCount,
+      discoveredRepositories: discovery.repositories.length,
+      hydratedRepositories: hydrated.length,
+      cachedRepositories: Object.keys(nextRecords).length,
+      catalogPlugins: plugins.length,
+      graphqlRequests: metrics.requests,
+      graphqlCost: metrics.cost,
+      graphqlRemaining: metrics.remaining,
       skipped: Object.fromEntries([...skipped].sort(([left], [right]) => left.localeCompare(right))),
     },
   }
@@ -272,24 +315,42 @@ export function preserveUpdatedAtWhenUnchanged(nextManifest, existingManifest) {
 
 async function main() {
   const options = parseArguments(process.argv.slice(2))
-  const { manifest: collectedManifest, summary } = await buildManifest({
+  const mode = process.env.CATALOG_COLLECTION_MODE ? parseMode(process.env.CATALOG_COLLECTION_MODE) : options.mode
+  const previousState = await readJson(options.state, createEmptyCollectionState())
+  const { manifest: collectedManifest, collectionState, summary } = await buildManifest({
     token: process.env.GITHUB_TOKEN,
+    mode,
+    previousState,
     onProgress: message => console.log(message),
   })
   let manifest = collectedManifest
   if (!options.dryRun) {
     const output = resolve(options.output)
-    try {
-      const existing = JSON.parse(await readFile(output, 'utf8'))
-      manifest = preserveUpdatedAtWhenUnchanged(manifest, existing)
-    } catch (error) {
-      if (error?.code !== 'ENOENT') throw error
-    }
-    await mkdir(dirname(output), { recursive: true })
-    await writeFile(output, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8')
+    const stateOutput = resolve(options.state)
+    const existing = await readJson(output)
+    if (existing) manifest = preserveUpdatedAtWhenUnchanged(manifest, existing)
+    await Promise.all([mkdir(dirname(output), { recursive: true }), mkdir(dirname(stateOutput), { recursive: true })])
+    await Promise.all([
+      writeFile(output, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8'),
+      writeFile(stateOutput, `${JSON.stringify(collectionState, null, 2)}\n`, 'utf8'),
+    ])
     console.log(`wrote ${manifest.plugins.length} plugins to ${options.output}`)
+    console.log(`wrote ${Object.keys(collectionState.repositories).length} repository states to ${options.state}`)
   }
   console.log(JSON.stringify(summary, null, 2))
+}
+
+function isReusableRecord(value) {
+  return isPlainObject(value)
+    && ((value.status === 'accepted' && isPlainObject(value.plugin) && typeof value.stars === 'number')
+      || (value.status === 'skipped' && isNonEmptyString(value.reason)))
+}
+
+function createMetrics() { return { requests: 0, cost: 0, remaining: null } }
+
+function parseMode(value) {
+  if (value === 'incremental' || value === 'full') return value
+  throw new Error(`collection mode must be "incremental" or "full", received: ${value}`)
 }
 
 function pluginId(packageName) {
@@ -316,48 +377,27 @@ function normalizePlacement(value) {
   return { enabled: true, slots, defaultSlot: value.defaultSlot }
 }
 
-function firstString(...values) {
-  return values.find(isNonEmptyString)
-}
-
-function stringArray(value) {
-  return Array.isArray(value) && value.every(isNonEmptyString) ? value : undefined
-}
-
-function isNonEmptyString(value) {
-  return typeof value === 'string' && value.trim().length > 0
-}
-
-function isPlainObject(value) {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-}
+function firstString(...values) { return values.find(isNonEmptyString) }
+function stringArray(value) { return Array.isArray(value) && value.every(isNonEmptyString) ? value : undefined }
+function isNonEmptyString(value) { return typeof value === 'string' && value.trim().length > 0 }
+function isPlainObject(value) { return typeof value === 'object' && value !== null && !Array.isArray(value) }
 
 function isHttpsUrl(value) {
   if (!isNonEmptyString(value)) return false
   try { return new URL(value).protocol === 'https:' } catch { return false }
 }
 
-function timestamp(value) {
-  return value.toISOString().replace(/\.\d{3}Z$/, 'Z')
+function isTimestamp(value) { return isNonEmptyString(value) && !Number.isNaN(new Date(value).getTime()) }
+function timestamp(value) { return value.toISOString().replace(/\.\d{3}Z$/, 'Z') }
+
+async function readJson(path, fallback) {
+  try { return JSON.parse(await readFile(resolve(path), 'utf8')) } catch (error) {
+    if (error?.code === 'ENOENT') return fallback
+    throw error
+  }
 }
 
-function addSeconds(value, seconds) {
-  return timestamp(new Date(new Date(value).getTime() + seconds * 1000))
-}
-
-function midpointTimestamp(startTime, endTime) {
-  const start = new Date(startTime).getTime()
-  const end = new Date(endTime).getTime()
-  return timestamp(new Date(start + Math.floor((end - start) / 2000) * 1000))
-}
-
-function delay(milliseconds) {
-  return new Promise(resolve => setTimeout(resolve, milliseconds))
-}
-
-function errorMessage(error) {
-  return error instanceof Error ? error.message : String(error)
-}
+function delay(milliseconds) { return new Promise(resolve => setTimeout(resolve, milliseconds)) }
 
 const isEntrypoint = process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])
 if (isEntrypoint) {

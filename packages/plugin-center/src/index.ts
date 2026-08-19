@@ -1,7 +1,7 @@
 import { Context } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/cordis-plugin-loader'
 import { TypertRemoteService } from '@deepseek-ai/dsh-typert-protocol'
-import { loadBundledCatalog } from './catalog.ts'
+import { createCatalogLoader } from './catalog.ts'
 import { createDshCliInstaller } from './installer.ts'
 import { createSnapMarketingUpdater } from './self-update.ts'
 import { projectInstalled, readProfileDependencyNames } from './inventory.ts'
@@ -21,12 +21,14 @@ export class PluginCenterGateway extends TypertRemoteService {
   static inject = ['loader']
 
   private readonly config: PluginCenterConfig
+  private readonly catalogLoader: () => Promise<PluginManifest>
   private readonly operationCoordinator: PluginOperationCoordinator
   private readonly selfUpdater: ReturnType<typeof createSnapMarketingUpdater>
 
   constructor(ctx: Context, config: PluginCenterConfig = {}) {
     super(ctx, 'pluginCenter')
     this.config = config
+    this.catalogLoader = config.catalogLoader ?? createCatalogLoader()
     const installer = config.installer ?? createDshCliInstaller({
       profile: config.profile ?? 'web',
       ...(config.command === undefined ? {} : { command: config.command }),
@@ -44,9 +46,9 @@ export class PluginCenterGateway extends TypertRemoteService {
     })
   }
 
-  /** Return the validated static catalog. The strict export is declared in `./typert`. */
+  /** Return the newest validated remote, cached, or bundled catalog. */
   async catalog(): Promise<PluginManifest> {
-    return loadBundledCatalog()
+    return this.catalogLoader()
   }
 
   /** Return current installed state for catalog plugins. */
@@ -88,7 +90,14 @@ export class PluginCenterGateway extends TypertRemoteService {
 }
 
 export type * from './types.ts'
-export { loadBundledCatalog } from './catalog.ts'
+export {
+  CATALOG_REFRESH_INTERVAL_MS,
+  REMOTE_CATALOG_URL,
+  createCatalogLoader,
+  loadBundledCatalog,
+  loadCatalog,
+  resolveCatalogCachePath,
+} from './catalog.ts'
 export { createDshCliInstaller } from './installer.ts'
 export { projectInstalled } from './inventory.ts'
 export { readProfileDependencyNames } from './inventory.ts'

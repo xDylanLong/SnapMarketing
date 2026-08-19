@@ -1,6 +1,6 @@
 # dsh-snapmarketing is a thin layer over the profile's existing Harness runtime.
-# The catalog is bundled with the plugin; only Harness runtime options belong
-# in the profile patch.
+# The public remote catalog needs no profile credentials or URL configuration;
+# the bundled catalog remains its offline fallback.
 - insert:
     - id: snapmarketing-plugin-center
       name: '@snapmarketing/dsh-plugin-center'

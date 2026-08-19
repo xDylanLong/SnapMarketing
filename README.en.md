@@ -24,7 +24,7 @@ For the product overview and interface, visit the [dsh-snapmarketing website](ht
 
 ## What you get
 
-- **Marketing plugin catalog** — a curated, package-shipped catalog with names, descriptions, categories, versions, repositories, and install sources.
+- **Daily marketing plugin catalog** — automatically downloads and caches the validated daily catalog with names, descriptions, categories, versions, repositories, and install sources.
 - **Search and filtering** — search by plugin name or description to find tools for a marketing workflow.
 - **One-click install and uninstall** — select a catalog entry and let Harness perform the real package operation; the UI shows progress and the operation result.
 - **Actual installed state** — reads the active Harness profile inventory instead of treating a button click as proof that a plugin is live.
@@ -34,7 +34,9 @@ For the product overview and interface, visit the [dsh-snapmarketing website](ht
 ## How it works
 
 ```text
-Bundled marketing catalog
+GitHub Action generates and validates the daily catalog
+          ↓
+Remote catalog → local cache → bundled fallback
           ↓
 SnapMarketing Plugin Market
           ↓  validated plugin id
@@ -43,7 +45,11 @@ Harness existing installer
 Harness Loader and plugin runtime
 ```
 
-The catalog lives at [`packages/plugin-center/registry/plugins.json`](packages/plugin-center/registry/plugins.json) and ships with `@snapmarketing/dsh-plugin-center`. The Host validates the Manifest, resolves the selected plugin id to an approved package source, and delegates installation or removal to Harness. Installed clients do not call GitHub at runtime.
+The catalog source lives at [`packages/plugin-center/registry/plugins.json`](packages/plugin-center/registry/plugins.json). A GitHub Action generates and validates it every day, then publishes it to the dedicated `catalog` branch. The Host checks the remote catalog at most once per hour and caches successful responses at `DSH_HOME/cache/dsh-snapmarketing/plugins.json`. If the remote request fails, times out, or returns invalid data, the Host uses the newest valid cache or the catalog bundled with the package. No GitHub token is required.
+
+The Host applies the same Manifest and install-source validation to remote, cached, and bundled data, resolves the selected plugin id to an approved package source, and delegates installation or removal to Harness. Catalog refreshes never install or update third-party plugins automatically.
+
+Existing users need one upgrade to a version of `@snapmarketing/dsh-plugin-center` that includes remote catalog support. After that upgrade, daily catalog changes no longer require reinstalling or releasing another Plugin Center version.
 
 ## Security and boundaries
 
@@ -94,12 +100,13 @@ pnpm check:package
 
 - [Marketing plugin catalog](packages/plugin-center/registry/plugins.json)
 - [Complete catalog backup](packages/plugin-center/registry/plugins.full.json)
+- [Incremental collection state](packages/plugin-center/registry/collection-cache.json)
 - [Manifest V1](docs/manifest-v1.md)
 - [Catalog maintenance](docs/catalog-maintenance.md)
 - [Contributing guide](CONTRIBUTING.md)
 - [SnapMarketing-Landing repository](https://github.com/xDylanLong/SnapMarketing-Landing)
 
-When adding or updating an entry, verify its package name, repository, version, category, and install source. Keep the Thin Layer boundary intact: reuse Harness installation and UI APIs rather than introducing a parallel package or layout system.
+When adding or updating an entry, verify its package name, repository-declared version, category, and source metadata. Catalog collection does not verify npm publication or installation availability. Keep the Thin Layer boundary intact: reuse Harness installation and UI APIs rather than introducing a parallel package or layout system.
 
 ## License
 

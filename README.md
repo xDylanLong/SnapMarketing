@@ -24,7 +24,7 @@ dsh plugin --profile web add @snapmarketing/dsh-plugin-center
 
 ## 你会得到什么
 
-- **营销插件目录**——随包发布精选的营销插件目录，展示名称、描述、分类、版本、仓库和安装来源。
+- **每日营销插件目录**——自动获取经过校验的每日目录并缓存到本地，展示名称、描述、分类、版本、仓库和安装来源。
 - **搜索与筛选**——按插件名称和描述搜索，快速找到适合当前营销工作流的插件。
 - **一键安装与卸载**——选择目录条目后，由 Harness 执行真实的包操作；界面展示进度和操作结果。
 - **真实的已安装状态**——读取当前 Harness Profile 的插件清单，不把一次按钮点击当成插件已经生效。
@@ -34,7 +34,9 @@ dsh plugin --profile web add @snapmarketing/dsh-plugin-center
 ## 工作方式
 
 ```text
-随包发布的营销目录
+GitHub Action 每日生成并校验目录
+          ↓
+远程目录 → 本地缓存 → 随包目录兜底
           ↓
 SnapMarketing 插件市场
           ↓  校验后的插件 id
@@ -43,7 +45,11 @@ Harness 现有安装器
 Harness Loader 与插件运行时
 ```
 
-目录文件位于 [`packages/plugin-center/registry/plugins.json`](packages/plugin-center/registry/plugins.json)，随 `@snapmarketing/dsh-plugin-center` 一起发布。Host 会校验 Manifest，把用户选择的插件 id 解析为已确认的包来源，再交给 Harness 执行安装或卸载。已安装的客户端不会在运行时访问 GitHub。
+目录源文件位于 [`packages/plugin-center/registry/plugins.json`](packages/plugin-center/registry/plugins.json)。GitHub Action 每天生成并校验目录，然后发布到独立的 `catalog` 分支。Host 最多每小时检查一次远程目录，成功后缓存到 `DSH_HOME/cache/dsh-snapmarketing/plugins.json`；远程不可用、超时或格式无效时，会自动使用最近一次有效缓存或随包目录。该过程不需要 GitHub Token。
+
+Host 会对远程、缓存和随包目录执行相同的 Manifest 与安装来源校验，把用户选择的插件 id 解析为已确认的包来源，再交给 Harness 执行安装或卸载。目录更新不会自动安装或升级任何第三方插件。
+
+现有用户需要升级一次到包含远程目录能力的 `@snapmarketing/dsh-plugin-center` 版本；完成这次升级后，后续每日目录变化不再要求重新安装或发布新的插件中心版本。
 
 ## 安全与边界
 
@@ -94,12 +100,13 @@ pnpm check:package
 
 - [营销插件目录](packages/plugin-center/registry/plugins.json)
 - [完整目录备份](packages/plugin-center/registry/plugins.full.json)
+- [增量采集状态](packages/plugin-center/registry/collection-cache.json)
 - [Manifest V1](docs/manifest-v1.md)
 - [目录维护](docs/catalog-maintenance.md)
 - [贡献指南](CONTRIBUTING.md)
 - [SnapMarketing-Landing 官网仓库](https://github.com/xDylanLong/SnapMarketing-Landing)
 
-新增或更新目录条目时，请确认包名、仓库、版本、分类和安装来源准确。保持 Thin Layer 边界：复用 Harness 的安装和 UI API，不新增平行的包管理或布局系统。
+新增或更新目录条目时，请确认包名、仓库声明版本、分类和来源元数据准确；目录收集不验证 npm 发布或安装可用性。保持 Thin Layer 边界：复用 Harness 的安装和 UI API，不新增平行的包管理或布局系统。
 
 ## 许可证
 
