@@ -17,7 +17,7 @@
     "build": "tsdown && tsc -p tsconfig.dts.json"
   },
   "dependencies": {
-    "zod": "^4.4.3"
+    "zod": "^4.5.4"
   },
   "devDependencies": {
     "tsdown": "0.22.2"
